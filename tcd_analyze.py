@@ -69,44 +69,73 @@ class TCDAnalyze:
       e = ExtensionError(data_file, '.twX')
       raise e
 
-    self.data_file = data_file
+    self._data_file = data_file
 
     
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
+
+      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
       
       lines = f.readlines()
-      patient_name = lines[1].split()[3]
-      prf = lines[3].split()[3]
-      sample_freq = lines[4].split()[3]
-      doppler_freq_1 = lines[7].split()[3]
-      doppler_freq_2 = lines[8].split()[3]
+      for i in xrange(len(lines)):
+	if ( lines[i].split()[2] == 'NAME:' ):
+	  metadata['patient_name'] = lines[i].split()[3]
+	elif ( lines[i].split()[2] == 'PRF' ):	
+	  metadata['prf'] = int(lines[i].split()[3])
+	elif ( lines[i].split()[2] == 'SAMPLE_F' ):	
+	  metadata['sample_freq'] = int(lines[i].split()[3])/10
+	elif ( lines[i].split()[2] == 'FDOP1' ):	
+	  metadata['doppler_freq_1'] = int(lines[i].split()[3])
+	elif ( lines[i].split()[2] == 'FDOP2' ):	
+	  metadata['doppler_freq_2'] = int(lines[i].split()[3])
 
       f.close()
 
-      return (patient_name, prf, sample_freq, doppler_freq_1, doppler_freq_1)
+      return metadata
 
     # default metadata
+    self._metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':100, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
 
     if metadata_file == '':
-      metadata_file = data_file[:data_file.rfind('.tw')] + 'tx' + p[-1]
+      metadata_file = self._data_file[:self._data_file.rfind('.tw')] + '.tx' + self._data_file[-1]
       if os.path.exists(metadata_file):
-	(self._patient_name, self._prf, self._sample_freq, self._doppler_freq_1, self._doppler_freq_1) = __parse_metadata(metadata_file)
-      else:
-	# default metadata
-	self._patient_name = 'unknown patient'
-	self._prf = 6000
-	self._sample_freq = 1000
-	self._doppler_freq_1 = 2000
-	self._doppler_freq_2 = 2000
+        self._metadata = __parse_metadata(metadata_file)
     else:
       os.stat(metadata_file)
       if re.match( r'.+\.tx\d', data_file) == None :
         e = ExtensionError(data_file, '.txX')
         raise e
-      (self._patient_name, self._prf, self._sample_freq, self._doppler_freq_1, self._doppler_freq_1) = __parse_metadata(metadata_file)
+      self._metadata = __parse_metadata(metadata_file)
 
+    self._channel_1_data, self._channel_2_data = read_tcd(self._data_file)
+    #self._channel_1_data = self._channel_1_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_1']
+    #self._channel_2_data = self._channel_2_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_2']
+
+
+  #def plot():
+    figure
+    time = arange(len(self._channel_1_data), dtype=float) / float(self._metadata['sample_freq'])
+    max_ind = self._metadata['sample_freq'] * 5
+    plot(time[:max_ind], self._channel_1_data[:max_ind], 'r-', time[:max_ind], self._channel_2_data[:max_ind], 'g-')
+    xlabel('Time [sec]')
+    ylabel('Velocity')
+    title('Patient: ' + self._metadata['patient_name'])
+    savefig(self._data_file + '.png')
+
+  #def show_fig():
+    #self.__plot()
+    show()
+
+  #def print_fig(format):
+    #self.__plot()
+
+    
 	
 
+# if running as script
+if __name__ == "__main__":
+      import sys
+      for arg in sys.argv[1:] :
+	 t = TCDAnalyze(arg)
 
-    self.metadata_file = metadata_file
