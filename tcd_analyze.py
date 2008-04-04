@@ -7,7 +7,7 @@
 
 from pylab import *
 import os
-import re
+import glob
 
 
 
@@ -60,14 +60,28 @@ class ExtensionError(Exception):
 class TCDAnalyze:
   """Process a trancranial doppler file.
 
-  Create figures and save them."""
+  Create figures and save them.
+  
+  *Parameters*:
+    
+      * filename_prefix: qualified] filename prefix, e.g. 'nla168'
+      
+    """
 
-  def __init__(self, data_file, metadata_file=''):
+  def __init__(self, filename_prefix):
     # argument checking
-    os.stat(data_file)
-    if re.match( r'.+\.tw\d', data_file) == None :
-      e = ExtensionError(data_file, '.twX')
-      raise e
+    if glob.glob(filename_prefix + '.tw*') == [] || glob.glob(filename_prefix + '.td*' == [] :
+	e = ExtensionError( filename_prefix, '.tw* or .td*')
+	raise e
+
+    self._filename_prefix = filename_prefix
+
+    # set containing #'s in filename_prefix + .tx#
+    self._x_set = set()
+    # set containing #'s in filename_prefix + .tw#
+    self._w_set = set()
+    # set containing #'s in filename_prefix + .td#
+    self._d_set = set()
 
     self._data_file = data_file
 
