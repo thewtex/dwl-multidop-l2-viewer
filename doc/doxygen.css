@@ -394,7 +394,7 @@ DIV.tabs A
 {
    float            : left;
    background-color       : #000000;
-   border-bottom    : 1px solid #33ff33;
+   border-bottom    : 1px solid #1ca31a;
    font-size        : x-small;
    font-weight      : bold;
    text-decoration  : none;
@@ -448,7 +448,10 @@ DIV.tabs A:hover SPAN
 DIV.tabs LI.current A
 {
    background-position: 100% -150px;
-   border-width     : 0px;
+   border-left    : 1px solid #1ca31a;
+   border-right    : 1px solid #1ca31a;
+   border-top    : 1px solid #1ca31a;
+   border-width     : 3px;
 }
 
 DIV.tabs LI.current SPAN
