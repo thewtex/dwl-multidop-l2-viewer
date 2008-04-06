@@ -18,7 +18,7 @@ CAPTION { font-weight: bold }
 DIV.qindex {
 	width: 100%;
 	background-color: #1B1B1B;
-	border: 1px solid #84b0c7;
+	border: 1px solid #71c775;
 	text-align: center;
 	margin: 2px;
 	padding: 2px;
@@ -27,7 +27,7 @@ DIV.qindex {
 DIV.nav {
 	width: 100%;
 	background-color: #1B1B1B;
-	border: 1px solid #84b0c7;
+	border: 1px solid #71c775;
 	text-align: center;
 	margin: 2px;
 	padding: 2px;
@@ -35,7 +35,7 @@ DIV.nav {
 }
 DIV.navtab {
        background-color: #1B1B1B;
-       border: 1px solid #84b0c7;
+       border: 1px solid #71c775;
        text-align: center;
        margin: 2px;
        margin-right: 15px;
@@ -57,26 +57,27 @@ A.qindex:visited {
 A.qindex:hover {
 	text-decoration: none;
 	background-color: #ddddff;
+	color: #000000
 }
 A.qindexHL {
 	text-decoration: none;
 	font-weight: bold;
-	background-color: #6666cc;
-	color: #000000;
-	border: 1px double #9295C2;
+	background-color: #415a2e;
+	color: #ffffff;
+	border: 1px double #37412e;
 }
 A.qindexHL:hover {
 	text-decoration: none;
-	background-color: #6666cc;
-	color: #000000;
+	background-color: #415a2e;
+	color: #ffffff;
 }
-A.qindexHL:visited { text-decoration: none; background-color: #6666cc; color: #000000 }
+A.qindexHL:visited { text-decoration: none; background-color: #415a2e; color: #ffffff }
 A.el { text-decoration: none; font-weight: bold }
 A.elRef { font-weight: bold }
-A.code:link { text-decoration: none; font-weight: normal; color: #0000FF}
-A.code:visited { text-decoration: none; font-weight: normal; color: #0000FF}
-A.codeRef:link { font-weight: normal; color: #0000FF}
-A.codeRef:visited { font-weight: normal; color: #0000FF}
+A.code:link { text-decoration: none; font-weight: normal; color: #4040df}
+A.code:visited { text-decoration: none; font-weight: normal; color: #4040ff}
+A.codeRef:link { font-weight: normal; color: #4040df}
+A.codeRef:visited { font-weight: normal; color: #4040ff}
 A:hover { text-decoration: none; background-color: #f2f2ff }
 DL.el { margin-left: -1cm }
 .fragment {
@@ -85,7 +86,7 @@ DL.el { margin-left: -1cm }
 }
 PRE.fragment {
 	border: 1px solid #CCCCCC;
-	background-color: #f5f5f5;
+	background-color: #101010;
 	margin-top: 4px;
 	margin-bottom: 4px;
 	margin-left: 2px;
@@ -95,8 +96,7 @@ PRE.fragment {
 	padding-top: 4px;
 	padding-bottom: 4px;
 }
-DIV.ah { background-color: black; font-weight: bold; color: #000000; margin-bottom: 3px; margin-top: 3px }
-
+DIV.ah { background-color: black; font-weight: bold; color: #ffffff; margin-bottom: 3px; margin-top: 3px }
 DIV.groupHeader {
        margin-left: 16px;
        margin-top: 12px;
@@ -121,8 +121,7 @@ TD.indexkey {
 	margin-right   : 0px;
 	margin-top     : 2px;
 	margin-bottom  : 2px;
-	border: 1px solid #CCCCCC;
-}
+	border: 1px solid #CCCCCC; }
 TD.indexvalue {
 	background-color: #1B1B1B;
 	font-style: italic;
@@ -137,38 +136,38 @@ TD.indexvalue {
 	border: 1px solid #CCCCCC;
 }
 TR.memlist {
-   background-color: #f0f0f0; 
+   background-color: #a0a0a0; 
 }
 P.formulaDsp { text-align: center; }
 IMG.formulaDsp { }
 IMG.formulaInl { vertical-align: middle; }
-SPAN.keyword       { color: #008000 }
-SPAN.keywordtype   { color: #604020 }
-SPAN.keywordflow   { color: #e08000 }
-SPAN.comment       { color: #800000 }
-SPAN.preprocessor  { color: #806020 }
-SPAN.stringliteral { color: #002080 }
-SPAN.charliteral   { color: #008080 }
+SPAN.keyword       { color: #30f030 }
+SPAN.keywordtype   { color: #907050 }
+SPAN.keywordflow   { color: #e09000 }
+SPAN.comment       { color: #f03030 }
+SPAN.preprocessor  { color: #907050 }
+SPAN.stringliteral { color: #0060c0 }
+SPAN.charliteral   { color: #00c0c0 }
 .mdescLeft {
        padding: 0px 8px 4px 8px;
 	font-size: 80%;
 	font-style: italic;
-	background-color: #FAFAFA;
-	border-top: 1px none #E0E0E0;
-	border-right: 1px none #E0E0E0;
-	border-bottom: 1px none #E0E0E0;
-	border-left: 1px none #E0E0E0;
+	background-color: #0B0B0B;
+	border-top: 1px none #2B2B2B;
+	border-right: 1px none #2B2B2B;
+	border-bottom: 1px none #2B2B2B;
+	border-left: 1px none #2B2B2B;
 	margin: 0px;
 }
 .mdescRight {
        padding: 0px 8px 4px 8px;
 	font-size: 80%;
 	font-style: italic;
-	background-color: #FAFAFA;
-	border-top: 1px none #E0E0E0;
-	border-right: 1px none #E0E0E0;
-	border-bottom: 1px none #E0E0E0;
-	border-left: 1px none #E0E0E0;
+	background-color: #0B0B0B;
+	border-top: 1px none #2B2B2B;
+	border-right: 1px none #2B2B2B;
+	border-bottom: 1px none #2B2B2B;
+	border-left: 1px none #2B2B2B;
 	margin: 0px;
 }
 .memItemLeft {
@@ -178,15 +177,15 @@ SPAN.charliteral   { color: #008080 }
 	border-right-width: 1px;
 	border-bottom-width: 1px;
 	border-left-width: 1px;
-	border-top-color: #E0E0E0;
-	border-right-color: #E0E0E0;
-	border-bottom-color: #E0E0E0;
-	border-left-color: #E0E0E0;
+	border-top-color: #2B2B2B;
+	border-right-color: #2B2B2B;
+	border-bottom-color: #2B2B2B;
+	border-left-color: #2B2B2B;
 	border-top-style: solid;
 	border-right-style: none;
 	border-bottom-style: none;
 	border-left-style: none;
-	background-color: #FAFAFA;
+	background-color: #0B0B0B;
 	font-size: 80%;
 }
 .memItemRight {
@@ -196,15 +195,15 @@ SPAN.charliteral   { color: #008080 }
 	border-right-width: 1px;
 	border-bottom-width: 1px;
 	border-left-width: 1px;
-	border-top-color: #E0E0E0;
-	border-right-color: #E0E0E0;
-	border-bottom-color: #E0E0E0;
-	border-left-color: #E0E0E0;
+	border-top-color: #2B2B2B;
+	border-right-color: #2B2B2B;
+	border-bottom-color: #2B2B2B;
+	border-left-color: #2B2B2B;
 	border-top-style: solid;
 	border-right-style: none;
 	border-bottom-style: none;
 	border-left-style: none;
-	background-color: #FAFAFA;
+	background-color: #0B0B0B;
 	font-size: 80%;
 }
 .memTemplItemLeft {
@@ -214,15 +213,15 @@ SPAN.charliteral   { color: #008080 }
 	border-right-width: 1px;
 	border-bottom-width: 1px;
 	border-left-width: 1px;
-	border-top-color: #E0E0E0;
-	border-right-color: #E0E0E0;
-	border-bottom-color: #E0E0E0;
-	border-left-color: #E0E0E0;
+	border-top-color: #2B2B2B;
+	border-right-color: #2B2B2B;
+	border-bottom-color: #2B2B2B;
+	border-left-color: #2B2B2B;
 	border-top-style: none;
 	border-right-style: none;
 	border-bottom-style: none;
 	border-left-style: none;
-	background-color: #FAFAFA;
+	background-color: #0B0B0B;
 	font-size: 80%;
 }
 .memTemplItemRight {
@@ -232,15 +231,15 @@ SPAN.charliteral   { color: #008080 }
 	border-right-width: 1px;
 	border-bottom-width: 1px;
 	border-left-width: 1px;
-	border-top-color: #E0E0E0;
-	border-right-color: #E0E0E0;
-	border-bottom-color: #E0E0E0;
-	border-left-color: #E0E0E0;
+	border-top-color: #2B2B2B;
+	border-right-color: #2B2B2B;
+	border-bottom-color: #2B2B2B;
+	border-left-color: #2B2B2B;
 	border-top-style: none;
 	border-right-style: none;
 	border-bottom-style: none;
 	border-left-style: none;
-	background-color: #FAFAFA;
+	background-color: #0B0B0B;
 	font-size: 80%;
 }
 .memTemplParams {
@@ -250,16 +249,16 @@ SPAN.charliteral   { color: #008080 }
 	border-right-width: 1px;
 	border-bottom-width: 1px;
 	border-left-width: 1px;
-	border-top-color: #E0E0E0;
-	border-right-color: #E0E0E0;
-	border-bottom-color: #E0E0E0;
-	border-left-color: #E0E0E0;
+	border-top-color: #2B2B2B;
+	border-right-color: #2B2B2B;
+	border-bottom-color: #2B2B2B;
+	border-left-color: #2B2B2B;
 	border-top-style: solid;
 	border-right-style: none;
 	border-bottom-style: none;
 	border-left-style: none;
        color: #606060;
-	background-color: #FAFAFA;
+	background-color: #0B0B0B;
 	font-size: 80%;
 }
 .search     { color: #003399;
@@ -277,14 +276,14 @@ INPUT.search { font-size: 75%;
 TD.tiny      { font-size: 75%;
 }
 a {
-	color: #1A41A8;
+	color: #1da81d;
 }
 a:visited {
-	color: #2A3798;
+	color: #5b981a;
 }
 .dirtab { padding: 4px;
           border-collapse: collapse;
-          border: 1px solid #84b0c7;
+          border: 1px solid #71c775;
 }
 TH.dirtab { background: #1B1B1B;
             font-weight: bold;
@@ -303,7 +302,7 @@ HR { height: 1px;
 } 
 .memnav { 
   background-color: #1B1B1B;
-  border: 1px solid #84b0c7;
+  border: 1px solid #71c775;
   text-align: center;
   margin: 2px;
   margin-right: 15px;
@@ -311,7 +310,7 @@ HR { height: 1px;
 }
 .memitem {
   padding: 4px;
-  background-color: #eef3f5;
+  background-color: #000000;
   border-width: 1px;
   border-style: solid;
   border-color: #dedeee;
@@ -325,11 +324,11 @@ HR { height: 1px;
   padding-left: 10px;
 }
 .memproto {
-  background-color: #d5e1e8;
+  background-color: #060606;
   width: 100%;
   border-width: 1px;
   border-style: solid;
-  border-color: #84b0c7;
+  border-color: #71c775;
   font-weight: bold;
   -moz-border-radius: 8px 8px 8px 8px;
 }
@@ -357,3 +356,110 @@ HR { height: 1px;
 .directory p { margin: 0px; white-space: nowrap; }
 .directory div { display: none; margin: 0px; }
 .directory img { vertical-align: -30%; }
+
+
+
+/* imported from tabs.css */
+
+/* tabs styles, based on http://www.alistapart.com/articles/slidingdoors */
+
+DIV.tabs
+{
+   float            : left;
+   width            : 100%;
+   background-color       : #000000;
+   margin-bottom    : 4px;
+}
+
+DIV.tabs UL
+{
+   margin           : 0px;
+   padding-left     : 10px;
+   list-style       : none;
+}
+
+DIV.tabs LI, DIV.tabs FORM
+{
+   display          : inline;
+   margin           : 0px;
+   padding          : 0px;
+}
+
+DIV.tabs FORM
+{
+   float            : right;
+}
+
+DIV.tabs A
+{
+   float            : left;
+   background-color       : #000000;
+   border-bottom    : 1px solid #33ff33;
+   font-size        : x-small;
+   font-weight      : bold;
+   text-decoration  : none;
+}
+
+DIV.tabs A:hover
+{
+   background-position: 100% -150px;
+}
+
+DIV.tabs A:link, DIV.tabs A:visited,
+DIV.tabs A:active, DIV.tabs A:hover
+{
+       color: #1Af13D;
+}
+
+DIV.tabs SPAN
+{
+   float            : left;
+   display          : block;
+   background-color       : #000000;
+   padding          : 5px 9px;
+   white-space      : nowrap;
+}
+
+DIV.tabs INPUT
+{
+   float            : right;
+   display          : inline;
+   font-size        : 1em;
+}
+
+DIV.tabs TD
+{
+   font-size        : x-small;
+   font-weight      : bold;
+   text-decoration  : none;
+}
+
+
+
+/* Commented Backslash Hack hides rule from IE5-Mac \*/
+DIV.tabs SPAN {float : none;}
+/* End IE5-Mac hack */
+
+DIV.tabs A:hover SPAN
+{
+   background-position: 0% -150px;
+}
+
+DIV.tabs LI.current A
+{
+   background-position: 100% -150px;
+   border-width     : 0px;
+}
+
+DIV.tabs LI.current SPAN
+{
+   background-position: 0% -150px;
+   padding-bottom   : 6px;
+}
+
+DIV.nav
+{
+   background       : none;
+   border           : none;
+   border-bottom    : 1px solid #84B0C7;
+}
