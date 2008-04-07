@@ -5,43 +5,12 @@
 # Matt McCormick (thewtex) <matt@mmmccormick.com>
 # 2008 March 15
 
-from pylab import *
+#from pylab import *
 import os
 import glob
 
 
 
-def read_tcd(filename):
-  """Read the contents of transcranial doppler nlaXXX.twX file.
-
-  Returns a two element tuple of numpy arrays; one for each channel."""
-
-  f = open(filename, 'rb')
-
-
-  f_size = os.path.getsize(filename)
-
-  samp_per_segment = 64
-  bytes_per_sample = 2
-  channels = 2
-
-  segments = f_size / ( samp_per_segment * bytes_per_sample * channels )
-
-  tcd_dtype= 'int16'
-
-
-  chan1 = array([], dtype=tcd_dtype)
-  chan2 = array([], dtype=tcd_dtype)
-  data  = zeros((samp_per_segment), dtype=tcd_dtype)
-  for seg in xrange(segments):
-    data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
-    chan1 = concatenate((chan1, data.copy()) )
-    data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
-    chan2 = concatenate((chan2, data.copy()) )
-  f.close()
-
-
-  return (chan1, chan2)
 
 
 
@@ -70,22 +39,34 @@ class TCDAnalyze:
 
   def __init__(self, filename_prefix):
     # argument checking
-    if glob.glob(filename_prefix + '.tw*') == [] || glob.glob(filename_prefix + '.td*' == [] :
+    if (glob.glob(filename_prefix + '.tw*') == []) & (glob.glob(filename_prefix + '.td*') == []) :
 	e = ExtensionError( filename_prefix, '.tw* or .td*')
 	raise e
 
     self._filename_prefix = filename_prefix
 
-    # set containing #'s in filename_prefix + .tx#
+    ## set containing #'s in filename_prefix + .tx#
     self._x_set = set()
-    # set containing #'s in filename_prefix + .tw#
+    ## set containing #'s in filename_prefix + .tw#
     self._w_set = set()
-    # set containing #'s in filename_prefix + .td#
+    ## set containing #'s in filename_prefix + .td#
     self._d_set = set()
 
-    self._data_file = data_file
+    prefixes = ['.tx', '.tw', '.td']
+    for prefix in prefixes:
+      for file in glob.glob(filename_prefix + prefix + '*'):
+	if prefix == '.tx':
+          self._x_set.add( file[ file.rindex( prefix )+3: ] )
+	elif prefix == '.tw':
+          self._w_set.add( file[ file.rindex( prefix )+3: ] )
+	elif prefix == '.td':
+          self._d_set.add( file[ file.rindex( prefix )+3: ] )
+	else:
+	  e = ExtensionError( 'unexpected, unknown extension, ' + prefix )
+	  raise e
+	  
 
-    
+
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
 
@@ -108,41 +89,99 @@ class TCDAnalyze:
 
       return metadata
 
-    # default metadata
-    self._metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':100, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
+    ## default metadata -- used if a '.tx#' file does not exist
+    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':100, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
 
-    if metadata_file == '':
-      metadata_file = self._data_file[:self._data_file.rfind('.tw')] + '.tx' + self._data_file[-1]
-      if os.path.exists(metadata_file):
-        self._metadata = __parse_metadata(metadata_file)
-    else:
-      os.stat(metadata_file)
-      if re.match( r'.+\.tx\d', data_file) == None :
-        e = ExtensionError(data_file, '.txX')
-        raise e
-      self._metadata = __parse_metadata(metadata_file)
-
-    self._channel_1_data, self._channel_2_data = read_tcd(self._data_file)
-    #self._channel_1_data = self._channel_1_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_1']
-    #self._channel_2_data = self._channel_2_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_2']
+    ## metadata extracted from the '.tx*' files
+    self._metadata = dict()
+    for file in self._x_set:
+      self._metadata[file] = __parse_metadata(self._filename_prefix + '.tx' + file)
+  
 
 
-  #def plot():
-    figure
-    time = arange(len(self._channel_1_data), dtype=float) / float(self._metadata['sample_freq'])
-    max_ind = self._metadata['sample_freq'] * 5
-    plot(time[:max_ind], self._channel_1_data[:max_ind], 'r-', time[:max_ind], self._channel_2_data[:max_ind], 'g-')
-    xlabel('Time [sec]')
-    ylabel('Velocity')
-    title('Patient: ' + self._metadata['patient_name'])
-    savefig(self._data_file + '.png')
 
-  #def show_fig():
-    #self.__plot()
-    show()
+  
+  def read_tcd(filename):
+    """Read the contents of transcranial doppler nlaXXX.twX file.
+  
+    Returns a two element tuple of numpy arrays; one for each channel."""
+  
+    f = open(filename, 'rb')
+  
+  
+    f_size = os.path.getsize(filename)
+  
+    samp_per_segment = 64
+    bytes_per_sample = 2
+    channels = 2
+  
+    segments = f_size / ( samp_per_segment * bytes_per_sample * channels )
+  
+    tcd_dtype= 'int16'
+  
+  
+    chan1 = array([], dtype=tcd_dtype)
+    chan2 = array([], dtype=tcd_dtype)
+    data  = zeros((samp_per_segment), dtype=tcd_dtype)
+    for seg in xrange(segments):
+      data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
+      chan1 = concatenate((chan1, data.copy()) )
+      data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
+      chan2 = concatenate((chan2, data.copy()) )
+    f.close()
+  
+  
+    return (chan1, chan2)
 
-  #def print_fig(format):
-    #self.__plot()
+  
+
+
+  def get_d_set(self):
+    """Return the set containing #'s in filename_prefix + .td#."""
+    return self._d_set
+  
+  def get_w_set(self):
+    """Return the set containing #'s in filename_prefix + .tw#."""
+    return self._w_set
+
+  def get_metadata(self):
+    """Return metadata extracted from the '.tx*' files."""
+    return self._metadata
+
+
+  def read_d(self,  d_set=self._d_set):
+    """Read the 'filename_prefix.td*' (doppler spectrum) files.
+
+    *Parameters*:
+      d_set:
+	subset of the self._d_set to read
+
+    """
+
+
+
+
+    #self._channel_1_data, self._channel_2_data = read_tcd(self._data_file)
+    ##self._channel_1_data = self._channel_1_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_1']
+    ##self._channel_2_data = self._channel_2_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_2']
+
+
+  ##def plot():
+    #figure
+    #time = arange(len(self._channel_1_data), dtype=float) / float(self._metadata['sample_freq'])
+    #max_ind = self._metadata['sample_freq'] * 5
+    #plot(time[:max_ind], self._channel_1_data[:max_ind], 'r-', time[:max_ind], self._channel_2_data[:max_ind], 'g-')
+    #xlabel('Time [sec]')
+    #ylabel('Velocity')
+    #title('Patient: ' + self._metadata['patient_name'])
+    #savefig(self._data_file + '.png')
+
+  ##def show_fig():
+    ##self.__plot()
+    #show()
+
+  ##def print_fig(format):
+    ##self.__plot()
 
     
 	
