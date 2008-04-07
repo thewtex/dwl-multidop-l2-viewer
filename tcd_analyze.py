@@ -5,7 +5,8 @@
 # Matt McCormick (thewtex) <matt@mmmccormick.com>
 # 2008 March 15
 
-#from pylab import *
+from pylab import *
+#from numpy import *
 import os
 import glob
 
@@ -136,6 +137,61 @@ class TCDAnalyze:
   
 
 
+
+  def _read_d(self,  d_set=[]):
+    """Read the 'filename_prefix.td*' (doppler spectrum) files.
+
+    *Parameters*:
+      d_set:
+	subset of the self._d_set to read, defaults to the entire set
+
+    """
+    if d_set == []:
+      d_set = self._d_set
+
+    self._d_data = dict()
+
+    for file in d_set:
+      filename = self._filename_prefix + '.td' + file 
+      f = open( filename, 'rb' )
+      f_size = os.path.getsize(filename)
+      print 'Reading ', filename
+  
+      samp_per_segment = 9216
+      bytes_per_sample = 2
+      channels = 2
+      # samples between data subsegments (see 'while' loop below)
+      subsegment_separator = 41472
+      # samples between data supersegments (see 'while' loop below)
+      supersegment_separator = 128
+      start_sample = 22016
+  
+      tcd_dtype= 'int16'
+  
+      chan1 = array([], dtype=tcd_dtype)
+      chan2 = array([], dtype=tcd_dtype)
+      data  = zeros((samp_per_segment), dtype=tcd_dtype)
+      index = start_sample
+      segment = 0
+      while( (index + samp_per_segment*2)*bytes_per_sample < f_size ):
+	f.seek(index*bytes_per_sample)
+        data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
+
+	segment = segment + 1
+	if segment % 2 == 1:
+	  index = index + subsegment_separator
+	  chan1 = concatenate((chan1, data.copy()) )
+	else:
+	  index = index + subsegment_separator + supersegment_separator
+	  chan2 = concatenate((chan2, data.copy()) )
+
+
+      self._d_data[file] = (chan1, chan2)
+
+      f.close()
+
+
+
   def get_d_set(self):
     """Return the set containing #'s in filename_prefix + .td#."""
     return self._d_set
@@ -148,17 +204,16 @@ class TCDAnalyze:
     """Return metadata extracted from the '.tx*' files."""
     return self._metadata
 
-
-  def read_d(self,  d_set=self._d_set):
-    """Read the 'filename_prefix.td*' (doppler spectrum) files.
-
+  def get_d_data(self, d_set=[]):
+    """Return the 'd' file doppler data.
     *Parameters*:
       d_set:
-	subset of the self._d_set to read
-
-    """
-
-
+	subset of the self._d_set to read, defaults to the entire set
+	"""
+    if d_set == []:
+      d_set = self._d_set
+    self._read_d(d_set)
+    return self._d_data
 
 
     #self._channel_1_data, self._channel_2_data = read_tcd(self._data_file)
@@ -191,4 +246,9 @@ if __name__ == "__main__":
       import sys
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
+	 data = t.get_d_data()
+	 plot(data['2'][0])
+	 plot(data['2'][1])
+	 show()
+
 
