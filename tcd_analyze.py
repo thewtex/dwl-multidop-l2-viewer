@@ -64,7 +64,7 @@ class TCDAnalyze:
   
   *Parameters*:
     
-      * filename_prefix: qualified] filename prefix, e.g. 'nla168'
+      * filename_prefix: [qualified] filename prefix, e.g. 'nla168'
       
     """
 
