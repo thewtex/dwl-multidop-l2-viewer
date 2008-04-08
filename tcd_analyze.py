@@ -103,7 +103,7 @@ class TCDAnalyze:
 
   
   def _read_w(self, w_set=[]):
-    """Read the 'filename_prefix.tw*' (doppler average velocity waveform) files.
+    """Read the 'filename_prefix.tw*' (doppler max velocity envelope) files.
 
     *Parameters*:
       w_set:
@@ -141,8 +141,8 @@ class TCDAnalyze:
         chan2 = concatenate((chan2, data.copy()) )
 
 
-      chan1 = chan1.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/2.0/10**3
-      chan2 = chan2.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/2.0/10**3
+      chan1 = chan1.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/10**3
+      chan2 = chan2.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/10**3
       self._w_data[file] = (chan1, chan2)
 
       f.close()
@@ -151,7 +151,7 @@ class TCDAnalyze:
 
 
   def plot_w_data(self, w_set=[], saveit=True, showit=False):
-    """Plot the 'd' file doppler data.
+    """Plot the 'w' file max velocity envelope data.
     
     *Parameters*:
       w_set:
