@@ -6,7 +6,6 @@
 # 2008 March 15
 
 from pylab import *
-#from numpy import *
 import os
 import glob
 
@@ -44,6 +43,7 @@ class TCDAnalyze:
 	e = ExtensionError( filename_prefix, '.tw* or .td*')
 	raise e
 
+    ## [qualified] filename prefix, e.g. 'nla168'
     self._filename_prefix = filename_prefix
 
     ## set containing #'s in filename_prefix + .tx#
@@ -138,6 +138,7 @@ class TCDAnalyze:
 
 
 
+  ## @warning this is incomplete, and possibly incorrect
   def _read_d(self,  d_set=[]):
     """Read the 'filename_prefix.td*' (doppler spectrum) files.
 
@@ -192,10 +193,57 @@ class TCDAnalyze:
       chan1.resize( (chan1.shape[0] / spectrum_points, spectrum_points) )
       chan2.resize( (chan2.shape[0] / spectrum_points, spectrum_points) )
 
+      chan1 = chan1.transpose()
+      chan2 = chan2.transpose()
+
       self._d_data[file] = (chan1, chan2)
 
       f.close()
 
+
+
+  ## @warning this is incomplete, and possibly incorrect
+  def plot_d_data(self, d_set=[], saveit=True, showit=False):
+    """Plot the 'd' file doppler data.
+    
+    *Parameters*:
+      d_set:
+	subset of the self._d_set to read, defaults to the entire set
+
+      saveit:
+	whether or not to save the plot to a file in the _file_prefix location
+
+      showit:
+	whether or not to show the plot in a GUI on screen
+
+    """
+    if d_set == []:
+      d_set = self._d_set
+
+    self._read_d(d_set)
+
+    for file in d_set:
+      if self._metadata.has_key(file):
+	metadata = self._metadata[file]
+      else:
+	metadata = self._default_metadata
+
+      (chan1, chan2) = self._d_data[file]
+      chan1 = array(chan1, dtype='float')
+      chan2 = array(chan2, dtype='float')
+
+      figure(int(file))
+      subplot(211)
+      #imshow( chan1, aspect='auto', origin='lower', extent=(0.0, float(len(chan1))/metadata['sample_freq'], -1, 1) )
+      imshow( chan1, aspect='auto' )
+      title( metadata['patient_name'] )
+      subplot(212)
+      imshow( chan2, aspect='auto' )
+
+      if saveit:
+	savefig( self._filename_prefix + '_doppler_' + file + '.png' )
+      if showit:
+	show()
 
 
   def get_d_set(self):
@@ -220,6 +268,9 @@ class TCDAnalyze:
       d_set = self._d_set
     self._read_d(d_set)
     return self._d_data
+
+
+
 
 
     #self._channel_1_data, self._channel_2_data = read_tcd(self._data_file)
@@ -252,11 +303,12 @@ if __name__ == "__main__":
       import sys
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
-	 data = t.get_d_data()
-	 figure(1)
-	 imshow(data['2'][1].transpose(), aspect='auto')
-	 figure(2)
-	 imshow(data['2'][0].transpose(), aspect='auto')
-	 savefig('image.png', facecolor='black', edgecolor='black')
+	 #data = t.get_d_data()
+	 t.plot_d_data()
+	 #figure(1)
+	 #imshow(data['2'][1].transpose(), aspect='auto')
+	 #figure(2)
+	 #imshow(data['2'][0].transpose(), aspect='auto')
+	 #savefig('image.png', facecolor='black', edgecolor='black')
 
 
