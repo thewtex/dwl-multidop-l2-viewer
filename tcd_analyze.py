@@ -149,7 +149,21 @@ class TCDAnalyze:
     if d_set == []:
       d_set = self._d_set
 
+    ## doppler data
     self._d_data = dict()
+
+    samp_per_segment = 9216
+    bytes_per_sample = 2
+    channels = 2
+    # samples between data subsegments (see 'while' loop below)
+    subsegment_separator = 41472
+    # samples between data supersegments (see 'while' loop below)
+    supersegment_separator = 128
+    start_sample = 22016
+    spectrum_points = 32
+
+    tcd_dtype= 'int16'
+
 
     for file in d_set:
       filename = self._filename_prefix + '.td' + file 
@@ -157,16 +171,6 @@ class TCDAnalyze:
       f_size = os.path.getsize(filename)
       print 'Reading ', filename
   
-      samp_per_segment = 9216
-      bytes_per_sample = 2
-      channels = 2
-      # samples between data subsegments (see 'while' loop below)
-      subsegment_separator = 41472
-      # samples between data supersegments (see 'while' loop below)
-      supersegment_separator = 128
-      start_sample = 22016
-  
-      tcd_dtype= 'int16'
   
       chan1 = array([], dtype=tcd_dtype)
       chan2 = array([], dtype=tcd_dtype)
@@ -185,6 +189,8 @@ class TCDAnalyze:
 	  index = index + subsegment_separator + supersegment_separator
 	  chan2 = concatenate((chan2, data.copy()) )
 
+      chan1.resize( (chan1.shape[0] / spectrum_points, spectrum_points) )
+      chan2.resize( (chan2.shape[0] / spectrum_points, spectrum_points) )
 
       self._d_data[file] = (chan1, chan2)
 
@@ -247,8 +253,10 @@ if __name__ == "__main__":
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
 	 data = t.get_d_data()
-	 plot(data['2'][0])
-	 plot(data['2'][1])
-	 show()
+	 figure(1)
+	 imshow(data['2'][1].transpose(), aspect='auto')
+	 figure(2)
+	 imshow(data['2'][0].transpose(), aspect='auto')
+	 savefig('image.png', facecolor='black', edgecolor='black')
 
 
