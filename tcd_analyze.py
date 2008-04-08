@@ -102,38 +102,104 @@ class TCDAnalyze:
 
 
   
-  def read_tcd(filename):
-    """Read the contents of transcranial doppler nlaXXX.twX file.
-  
-    Returns a two element tuple of numpy arrays; one for each channel."""
-  
-    f = open(filename, 'rb')
-  
-  
-    f_size = os.path.getsize(filename)
-  
+  def _read_w(self, w_set=[]):
+    """Read the 'filename_prefix.tw*' (doppler average velocity waveform) files.
+
+    *Parameters*:
+      w_set:
+	subset of the self._w_set to read, defaults to the entire set
+
+	"""
+
+    if w_set == []:
+      w_set = self._w_set
+
+    ## doppler data
+    self._w_data = dict()
+
     samp_per_segment = 64
     bytes_per_sample = 2
     channels = 2
-  
-    segments = f_size / ( samp_per_segment * bytes_per_sample * channels )
-  
     tcd_dtype= 'int16'
-  
-  
-    chan1 = array([], dtype=tcd_dtype)
-    chan2 = array([], dtype=tcd_dtype)
-    data  = zeros((samp_per_segment), dtype=tcd_dtype)
-    for seg in xrange(segments):
-      data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
-      chan1 = concatenate((chan1, data.copy()) )
-      data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
-      chan2 = concatenate((chan2, data.copy()) )
-    f.close()
-  
-  
-    return (chan1, chan2)
 
+
+    for file in w_set:
+      filename = self._filename_prefix + '.tw' + file 
+      f = open(filename, 'rb')
+      f_size = os.path.getsize(filename)
+      print 'Reading ', filename
+  
+      segments = f_size / ( samp_per_segment * bytes_per_sample * channels )
+  
+      chan1 = array([], dtype=tcd_dtype)
+      chan2 = array([], dtype=tcd_dtype)
+      data  = zeros((samp_per_segment), dtype=tcd_dtype)
+      for seg in xrange(segments):
+        data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
+        chan1 = concatenate((chan1, data.copy()) )
+        data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
+        chan2 = concatenate((chan2, data.copy()) )
+
+
+      chan1 = chan1.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/2.0/10**3
+      chan2 = chan2.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/2.0/10**3
+      self._w_data[file] = (chan1, chan2)
+
+      f.close()
+  
+  
+
+
+  def plot_w_data(self, w_set=[], saveit=True, showit=False):
+    """Plot the 'd' file doppler data.
+    
+    *Parameters*:
+      w_set:
+	subset of the self._w_set to read, defaults to the entire set
+
+      saveit:
+	whether or not to save the plot to a file in the _file_prefix location
+
+      showit:
+	whether or not to show the plot in a GUI on screen
+
+    """
+    if w_set == []:
+      w_set = self._w_set
+
+    self._read_w(w_set)
+
+    for file in w_set:
+      print 'Plotting ', self._filename_prefix + '.tw' + file
+      if self._metadata.has_key(file):
+	metadata = self._metadata[file]
+      else:
+	metadata = self._default_metadata
+
+      (chan1, chan2) = self._w_data[file]
+      time = arange( len(chan1) ) / float( metadata['sample_freq'] )
+
+      figure(int(file))
+      if time[-1] > 5.0:
+	subplot(211)
+        maxind = where( time < 5.0 )[0][-1]
+        plot( time[:maxind], chan1[:maxind], 'r-',  label='Channel 1' )
+        plot( time[:maxind], chan2[:maxind], 'g-', label='Channel 2' )
+	title( metadata['patient_name'] + ' first five seconds' )
+        ylabel('Velocity [cm/s]')
+	subplot(212)
+      plot( time, chan1, 'r-',  label='Channel 1' )
+      plot( time, chan2, 'g-', label='Channel 2' )
+      legend( )
+      ylabel('Velocity [cm/s]')
+      xlabel('Time [sec]')
+      title( metadata['patient_name'] )
+
+      if saveit:
+	savefig( self._filename_prefix + '_velocity_curve_' + file + '.png' )
+	savefig( self._filename_prefix + '_velocity_curve_' + file + '.eps' )
+      if showit:
+	show()
   
 
 
@@ -255,7 +321,22 @@ class TCDAnalyze:
     return self._w_set
 
   def get_metadata(self):
-    """Return metadata extracted from the '.tx*' files."""
+    """Return metadata extracted from the '.tx*' files.
+      
+      metadata has the following dictionary keys:
+	patient_name:
+	  
+	prf:
+	  pulse repetition frequency [Hz]
+	  
+	sample_freq:
+	  velocity curve sampleing frequency [Hz]
+	  
+	doppler_freq_1:
+	  excitation frequency of channel 1 [kHz]
+	  
+	doppler_freq_2:
+	  excitation frequency of channel 2 [kHz]"""
     return self._metadata
 
   def get_d_data(self, d_set=[]):
@@ -268,6 +349,17 @@ class TCDAnalyze:
       d_set = self._d_set
     self._read_d(d_set)
     return self._d_data
+
+  def get_w_data(self, w_set=[]):
+    """Return the 'w' file average velocity data.
+    *Parameters*:
+      w_set:
+	subset of the self._w_set to read, defaults to the entire set
+	"""
+    if w_set == []:
+      w_set = self._w_set
+    self._read_w(w_set)
+    return self._w_data
 
 
 
@@ -304,11 +396,6 @@ if __name__ == "__main__":
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
 	 #data = t.get_d_data()
-	 t.plot_d_data()
-	 #figure(1)
-	 #imshow(data['2'][1].transpose(), aspect='auto')
-	 #figure(2)
-	 #imshow(data['2'][0].transpose(), aspect='auto')
-	 #savefig('image.png', facecolor='black', edgecolor='black')
+	 t.plot_w_data()
 
 
