@@ -6,10 +6,10 @@
 # 2008 March 15
 
 from pylab import *
+
 import os
 import glob
-
-
+import datetime
 
 
 
@@ -26,6 +26,8 @@ class ExtensionError(Exception):
 
 
 
+
+
 class TCDAnalyze:
   """Process a trancranial doppler file.
 
@@ -39,7 +41,7 @@ class TCDAnalyze:
 
   def __init__(self, filename_prefix):
     # argument checking
-    if (glob.glob(filename_prefix + '.tw*') == []) & (glob.glob(filename_prefix + '.td*') == []) :
+    if (glob.glob(filename_prefix + '.tw*') == []) and (glob.glob(filename_prefix + '.td*') == []) :
 	e = ExtensionError( filename_prefix, '.tw* or .td*')
 	raise e
 
@@ -71,27 +73,34 @@ class TCDAnalyze:
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
 
-      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
+      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':datetime.time(0, 0, 0), 'hits':[]}
       
       lines = f.readlines()
       for i in xrange(len(lines)):
-	if ( lines[i].split()[2] == 'NAME:' ):
-	  metadata['patient_name'] = lines[i].split()[3]
-	elif ( lines[i].split()[2] == 'PRF' ):	
-	  metadata['prf'] = int(lines[i].split()[3])
-	elif ( lines[i].split()[2] == 'SAMPLE_F' ):	
-	  metadata['sample_freq'] = int(lines[i].split()[3])/10
-	elif ( lines[i].split()[2] == 'FDOP1' ):	
-	  metadata['doppler_freq_1'] = int(lines[i].split()[3])
-	elif ( lines[i].split()[2] == 'FDOP2' ):	
-	  metadata['doppler_freq_2'] = int(lines[i].split()[3])
+	lis = lines[i].split()
+	if lis[1] == 'HIT':
+	  ts = lis[3].split(':')
+	  metadata['hits'].append( (int(lis[0]), lis[2], datetime.time( int(ts[0]), int(ts[1]), int(ts[2]) ) ) )
+        elif ( lis[2] == 'NAME:' ):
+	  metadata['patient_name'] = lis[3]
+	elif ( lis[2] == 'PRF' ):	
+	  metadata['prf'] = int(lis[3])
+	elif ( lis[2] == 'SAMPLE_F' ):	
+	  metadata['sample_freq'] = int(lis[3])/10
+	elif ( lis[2] == 'FDOP1' ):	
+	  metadata['doppler_freq_1'] = int(lis[3])
+	elif ( lis[2] == 'FDOP2' ):	
+	  metadata['doppler_freq_2'] = int(lis[3])
+	elif lis[1] == 'START' :
+	  ts = lis[2].split(':')
+	  metadata['start_time'] = datetime.time(int(ts[0]), int(ts[1]), int(ts[2]) )
 
       f.close()
 
       return metadata
 
     ## default metadata -- used if a '.tx#' file does not exist
-    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':100, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
+    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':datetime.time(0, 0, 0), 'hits':[]}
 
     ## metadata extracted from the '.tx*' files
     self._metadata = dict()
@@ -336,7 +345,14 @@ class TCDAnalyze:
 	  excitation frequency of channel 1 [kHz]
 	  
 	doppler_freq_2:
-	  excitation frequency of channel 2 [kHz]"""
+	  excitation frequency of channel 2 [kHz]
+
+	start_time:
+	  datetime.time object of the clock time of acquisition start
+
+	hits:
+	  list with the detected hits.  Each entry is a tuple with the sample point, hit dB, and hit time
+	  """
     return self._metadata
 
   def get_d_data(self, d_set=[]):
