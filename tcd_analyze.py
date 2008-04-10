@@ -365,28 +365,6 @@ class TCDAnalyze:
 
 
 
-    #self._channel_1_data, self._channel_2_data = read_tcd(self._data_file)
-    ##self._channel_1_data = self._channel_1_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_1']
-    ##self._channel_2_data = self._channel_2_data.astype(float) / 2.0**15 * self._metadata['prf']/2.0 *154 / self._metadata['doppler_freq_2']
-
-
-  ##def plot():
-    #figure
-    #time = arange(len(self._channel_1_data), dtype=float) / float(self._metadata['sample_freq'])
-    #max_ind = self._metadata['sample_freq'] * 5
-    #plot(time[:max_ind], self._channel_1_data[:max_ind], 'r-', time[:max_ind], self._channel_2_data[:max_ind], 'g-')
-    #xlabel('Time [sec]')
-    #ylabel('Velocity')
-    #title('Patient: ' + self._metadata['patient_name'])
-    #savefig(self._data_file + '.png')
-
-  ##def show_fig():
-    ##self.__plot()
-    #show()
-
-  ##def print_fig(format):
-    ##self.__plot()
-
     
 	
 
@@ -395,7 +373,6 @@ if __name__ == "__main__":
       import sys
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
-	 #data = t.get_d_data()
 	 t.plot_w_data()
 
 
