@@ -9,7 +9,6 @@ from pylab import *
 
 import os
 import glob
-import datetime
 
 
 
@@ -73,14 +72,14 @@ class TCDAnalyze:
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
 
-      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':datetime.time(0, 0, 0), 'hits':[]}
+      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
       
       lines = f.readlines()
       for i in xrange(len(lines)):
 	lis = lines[i].split()
 	if lis[1] == 'HIT':
 	  ts = lis[3].split(':')
-	  metadata['hits'].append( (int(lis[0]), lis[2], datetime.time( int(ts[0]), int(ts[1]), int(ts[2]) ) ) )
+	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3] ) ) 
         elif ( lis[2] == 'NAME:' ):
 	  metadata['patient_name'] = lis[3]
 	elif ( lis[2] == 'PRF' ):	
@@ -92,15 +91,14 @@ class TCDAnalyze:
 	elif ( lis[2] == 'FDOP2' ):	
 	  metadata['doppler_freq_2'] = int(lis[3])
 	elif lis[1] == 'START' :
-	  ts = lis[2].split(':')
-	  metadata['start_time'] = datetime.time(int(ts[0]), int(ts[1]), int(ts[2]) )
+	  metadata['start_time'] = lis[2] 
 
       f.close()
 
       return metadata
 
     ## default metadata -- used if a '.tx#' file does not exist
-    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':datetime.time(0, 0, 0), 'hits':[]}
+    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
 
     ## metadata extracted from the '.tx*' files
     self._metadata = dict()
@@ -186,7 +184,8 @@ class TCDAnalyze:
 	metadata = self._default_metadata
 
       (chan1, chan2) = self._w_data[file]
-      time = arange( len(chan1) ) / float( metadata['sample_freq'] )
+      sample_freq = float( metadata['sample_freq'])
+      time = arange( len(chan1) ) / sample_freq
 
       figure(int(file))
       if time[-1] > 5.0:
@@ -196,12 +195,17 @@ class TCDAnalyze:
         plot( time[:maxind], chan2[:maxind], 'g-', label='Channel 2' )
 	title( metadata['patient_name'] + ' first five seconds' )
         ylabel('Velocity [cm/s]')
+	grid(True)
 	subplot(212)
       plot( time, chan1, 'r-',  label='Channel 1' )
       plot( time, chan2, 'g-', label='Channel 2' )
       legend( )
+      hity = max([max(chan1), max(chan2)]) / 2.0
+      for i in metadata['hits']:
+	plot( [float(i[0]) / sample_freq], [hity], 'bo')
+	text( float(i[0]) / sample_freq, hity+10.0, i[1] + ' ' + i[2], color='blue', horizontalalignment='center', fontsize=10 )
       ylabel('Velocity [cm/s]')
-      xlabel('Time [sec]')
+      xlabel('Time [sec] + ' + metadata['start_time'])
       title( metadata['patient_name'] )
 
       if saveit:
@@ -339,7 +343,7 @@ class TCDAnalyze:
 	  pulse repetition frequency [Hz]
 	  
 	sample_freq:
-	  velocity curve sampleing frequency [Hz]
+	  velocity curve sampling frequency [Hz]
 	  
 	doppler_freq_1:
 	  excitation frequency of channel 1 [kHz]
@@ -348,7 +352,7 @@ class TCDAnalyze:
 	  excitation frequency of channel 2 [kHz]
 
 	start_time:
-	  datetime.time object of the clock time of acquisition start
+	  clock time of acquisition start
 
 	hits:
 	  list with the detected hits.  Each entry is a tuple with the sample point, hit dB, and hit time
