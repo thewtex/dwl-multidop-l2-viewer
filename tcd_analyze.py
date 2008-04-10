@@ -6,10 +6,9 @@
 # 2008 March 15
 
 from pylab import *
+
 import os
 import glob
-
-
 
 
 
@@ -26,6 +25,8 @@ class ExtensionError(Exception):
 
 
 
+
+
 class TCDAnalyze:
   """Process a trancranial doppler file.
 
@@ -39,7 +40,7 @@ class TCDAnalyze:
 
   def __init__(self, filename_prefix):
     # argument checking
-    if (glob.glob(filename_prefix + '.tw*') == []) & (glob.glob(filename_prefix + '.td*') == []) :
+    if (glob.glob(filename_prefix + '.tw*') == []) and (glob.glob(filename_prefix + '.td*') == []) :
 	e = ExtensionError( filename_prefix, '.tw* or .td*')
 	raise e
 
@@ -71,27 +72,33 @@ class TCDAnalyze:
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
 
-      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
+      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
       
       lines = f.readlines()
       for i in xrange(len(lines)):
-	if ( lines[i].split()[2] == 'NAME:' ):
-	  metadata['patient_name'] = lines[i].split()[3]
-	elif ( lines[i].split()[2] == 'PRF' ):	
-	  metadata['prf'] = int(lines[i].split()[3])
-	elif ( lines[i].split()[2] == 'SAMPLE_F' ):	
-	  metadata['sample_freq'] = int(lines[i].split()[3])/10
-	elif ( lines[i].split()[2] == 'FDOP1' ):	
-	  metadata['doppler_freq_1'] = int(lines[i].split()[3])
-	elif ( lines[i].split()[2] == 'FDOP2' ):	
-	  metadata['doppler_freq_2'] = int(lines[i].split()[3])
+	lis = lines[i].split()
+	if lis[1] == 'HIT':
+	  ts = lis[3].split(':')
+	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3] ) ) 
+        elif ( lis[2] == 'NAME:' ):
+	  metadata['patient_name'] = lis[3]
+	elif ( lis[2] == 'PRF' ):	
+	  metadata['prf'] = int(lis[3])
+	elif ( lis[2] == 'SAMPLE_F' ):	
+	  metadata['sample_freq'] = int(lis[3])/10
+	elif ( lis[2] == 'FDOP1' ):	
+	  metadata['doppler_freq_1'] = int(lis[3])
+	elif ( lis[2] == 'FDOP2' ):	
+	  metadata['doppler_freq_2'] = int(lis[3])
+	elif lis[1] == 'START' :
+	  metadata['start_time'] = lis[2] 
 
       f.close()
 
       return metadata
 
     ## default metadata -- used if a '.tx#' file does not exist
-    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':100, 'doppler_freq_1':2000, 'doppler_freq_2':2000}
+    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
 
     ## metadata extracted from the '.tx*' files
     self._metadata = dict()
@@ -103,7 +110,7 @@ class TCDAnalyze:
 
   
   def _read_w(self, w_set=[]):
-    """Read the 'filename_prefix.tw*' (doppler average velocity waveform) files.
+    """Read the 'filename_prefix.tw*' (doppler max velocity envelope) files.
 
     *Parameters*:
       w_set:
@@ -141,8 +148,8 @@ class TCDAnalyze:
         chan2 = concatenate((chan2, data.copy()) )
 
 
-      chan1 = chan1.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/2.0/10**3
-      chan2 = chan2.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/2.0/10**3
+      chan1 = chan1.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/10**3
+      chan2 = chan2.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/10**3
       self._w_data[file] = (chan1, chan2)
 
       f.close()
@@ -151,7 +158,7 @@ class TCDAnalyze:
 
 
   def plot_w_data(self, w_set=[], saveit=True, showit=False):
-    """Plot the 'd' file doppler data.
+    """Plot the 'w' file max velocity envelope data.
     
     *Parameters*:
       w_set:
@@ -177,7 +184,8 @@ class TCDAnalyze:
 	metadata = self._default_metadata
 
       (chan1, chan2) = self._w_data[file]
-      time = arange( len(chan1) ) / float( metadata['sample_freq'] )
+      sample_freq = float( metadata['sample_freq'])
+      time = arange( len(chan1) ) / sample_freq
 
       figure(int(file))
       if time[-1] > 5.0:
@@ -187,12 +195,17 @@ class TCDAnalyze:
         plot( time[:maxind], chan2[:maxind], 'g-', label='Channel 2' )
 	title( metadata['patient_name'] + ' first five seconds' )
         ylabel('Velocity [cm/s]')
+	grid(True)
 	subplot(212)
       plot( time, chan1, 'r-',  label='Channel 1' )
       plot( time, chan2, 'g-', label='Channel 2' )
       legend( )
+      hity = max([max(chan1), max(chan2)]) / 2.0
+      for i in metadata['hits']:
+	plot( [float(i[0]) / sample_freq], [hity], 'bo')
+	text( float(i[0]) / sample_freq, hity+10.0, i[1] + ' ' + i[2], color='blue', horizontalalignment='center', fontsize=10 )
       ylabel('Velocity [cm/s]')
-      xlabel('Time [sec]')
+      xlabel('Time [sec] + ' + metadata['start_time'])
       title( metadata['patient_name'] )
 
       if saveit:
@@ -330,13 +343,20 @@ class TCDAnalyze:
 	  pulse repetition frequency [Hz]
 	  
 	sample_freq:
-	  velocity curve sampleing frequency [Hz]
+	  velocity curve sampling frequency [Hz]
 	  
 	doppler_freq_1:
 	  excitation frequency of channel 1 [kHz]
 	  
 	doppler_freq_2:
-	  excitation frequency of channel 2 [kHz]"""
+	  excitation frequency of channel 2 [kHz]
+
+	start_time:
+	  clock time of acquisition start
+
+	hits:
+	  list with the detected hits.  Each entry is a tuple with the sample point, hit dB, and hit time
+	  """
     return self._metadata
 
   def get_d_data(self, d_set=[]):
