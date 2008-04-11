@@ -12,6 +12,32 @@ import glob
 
 
 
+# adjusted from /usr/share/doc/matplotlib-0.91.2/examples/clippedline.py
+class ClippedLine(Line2D):
+    """
+    Clip the xlimits to the axes view limits -- this example assumes x is sorted
+    """
+
+    def __init__(self, ax, *args, **kwargs):
+        Line2D.__init__(self, *args, **kwargs)
+        self.ax = ax
+
+
+    def set_data(self, *args, **kwargs):
+        Line2D.set_data(self, *args, **kwargs)
+        self.xorig = npy.array(self._x)
+        self.yorig = npy.array(self._y)
+
+    def draw(self, renderer):
+        xlim = self.ax.get_xlim()
+
+        ind0, ind1 = npy.searchsorted(self.xorig, xlim)
+        self._x = self.xorig[ind0:ind1]
+        self._y = self.yorig[ind0:ind1]
+
+        Line2D.draw(self, renderer)
+
+
 
 class ExtensionError(Exception):
   """Exception raised if a file does not have the expected extension."""
@@ -175,6 +201,7 @@ class TCDAnalyze:
       w_set = self._w_set
 
     def onpick_adjust_xaxis( event ):
+      """Adjust the view of the top subplot"""
       fig = gcf()
       ax = fig.get_axes()
       a = ax[0]
@@ -198,18 +225,24 @@ class TCDAnalyze:
 
       fig = figure(int(file))
 
-      subplot(211)
-      plot( time, chan1, 'r-',  label='Channel 1' )
-      plot( time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       chansmax = max([max(chan1), max(chan2)]) 
+      chansmin = min([min(chan1), min(chan2)])
       hity = chansmax / 3.0
       hityinc = chansmax/11.0
+
+      ax1 = fig.add_subplot(211)
+      ax1.set_ylim(chansmin, chansmax)
+      chan1_line1 = ClippedLine(ax1, time, chan1, color='r', ls='-',  label='Channel 1', markersize=0 )
+      chan2_line1 = ClippedLine(ax1, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
+      ax1.add_line(chan1_line1)
+      ax1.add_line(chan2_line1)
       for i in metadata['hits']:
 	if hity > chansmax* 2.0/3.0:
 	  hity = chansmax/ 3.0
 	else:
 	  hity = hity + hityinc
-        plot( [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
+        line = ClippedLine(ax1, [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
+	ax1.add_line(line)
         text( float(i[0]) / sample_freq, hity+hityinc/2.0, i[1] + ' ' + i[2], color=(0.9, 0.9, 1.0),  horizontalalignment='center', fontsize=12 )
       xlim( (0.0, 5.0) )
       l = legend( )
