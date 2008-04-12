@@ -174,7 +174,15 @@ class TCDAnalyze:
     if w_set == []:
       w_set = self._w_set
 
+    def onpick_adjust_xaxis( event ):
+      fig = gcf()
+      ax = fig.get_axes()
+      a = ax[0]
+      a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
+      draw()
+      
     self._read_w(w_set)
+
 
     for file in w_set:
       print 'Plotting ', self._filename_prefix + '.tw' + file
@@ -187,31 +195,51 @@ class TCDAnalyze:
       sample_freq = float( metadata['sample_freq'])
       time = arange( len(chan1) ) / sample_freq
 
-      figure(int(file))
-      if time[-1] > 5.0:
-	subplot(211)
-        maxind = where( time < 5.0 )[0][-1]
-        plot( time[:maxind], chan1[:maxind], 'r-',  label='Channel 1' )
-        plot( time[:maxind], chan2[:maxind], 'g-', label='Channel 2' )
-	title( metadata['patient_name'] + ' first five seconds' )
-        ylabel('Velocity [cm/s]')
-	grid(True)
-	subplot(212)
+
+      fig = figure(int(file))
+
+      subplot(211)
       plot( time, chan1, 'r-',  label='Channel 1' )
-      plot( time, chan2, 'g-', label='Channel 2' )
-      legend( )
-      hity = max([max(chan1), max(chan2)]) / 2.0
+      plot( time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
+      chansmax = max([max(chan1), max(chan2)]) 
+      hity = chansmax / 3.0
+      hityinc = chansmax/11.0
       for i in metadata['hits']:
-	plot( [float(i[0]) / sample_freq], [hity], 'bo')
-	text( float(i[0]) / sample_freq, hity+10.0, i[1] + ' ' + i[2], color='blue', horizontalalignment='center', fontsize=10 )
+	if hity > chansmax* 2.0/3.0:
+	  hity = chansmax/ 3.0
+	else:
+	  hity = hity + hityinc
+        plot( [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
+        text( float(i[0]) / sample_freq, hity+hityinc/2.0, i[1] + ' ' + i[2], color=(0.9, 0.9, 1.0),  horizontalalignment='center', fontsize=12 )
+      xlim( (0.0, 5.0) )
+      l = legend( )
+      lf = l.get_frame()
+      lf.set_facecolor( (0.5, 0.5, 0.5) )
+
+      title( metadata['patient_name'] )
+      ylabel('Velocity [cm/s]')
+      grid(b=True, color=(0.3, 0.3, 0.3))
+
+      ax2 = fig.add_subplot(212)
+      ax2.set_picker(True)
+      plot( time, chan1, 'r-',  label='Channel 1', antialiased=False )
+      plot( time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=False )
+      chansmax = max([max(chan1), max(chan2)]) 
+      hity = chansmax / 3.0
+      for i in metadata['hits']:
+	if hity > chansmax* 2.0/3.0:
+	  hity = chansmax/ 3.0
+	else:
+	  hity = hity + hityinc
+	plot( [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
       ylabel('Velocity [cm/s]')
       xlabel('Time [sec] + ' + metadata['start_time'])
-      title( metadata['patient_name'] )
 
       if saveit:
 	savefig( self._filename_prefix + '_velocity_curve_' + file + '.png' )
 	savefig( self._filename_prefix + '_velocity_curve_' + file + '.eps' )
       if showit:
+	fig.canvas.mpl_connect('pick_event', onpick_adjust_xaxis)
 	show()
   
 
@@ -393,6 +421,6 @@ if __name__ == "__main__":
       import sys
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
-	 t.plot_w_data()
+	 t.plot_w_data(showit=True)
 
 
