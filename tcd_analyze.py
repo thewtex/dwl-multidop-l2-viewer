@@ -225,8 +225,8 @@ class TCDAnalyze:
 
       fig = figure(int(file))
 
-      chansmax = max([max(chan1), max(chan2)]) 
-      chansmin = min([min(chan1), min(chan2)])
+      chansmax = max([chan1.max(), chan2.max()]) 
+      chansmin = min([chan1.min(), chan2.min()])
       hity = chansmax / 3.0
       hityinc = chansmax/11.0
 
