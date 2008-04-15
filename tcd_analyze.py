@@ -80,14 +80,19 @@ class DecimatedClippedLine(Line2D):
 
     self._x = self.xorig[ind0:ind1]
     self._y = self.yorig[ind0:ind1]
+
+    if self.ax.get_autoscale_on():
+      ylim = self.ax.get_xlim()
+      self.ax.set_ylim( min([ylim[0], self._y.min()]), max([ylim[1], self._y.max()]) )
+
     if width / float( ind1 - ind0 ) < 0.4: # if number of points to plot is much greater than the pixels in the plot
       print 'downsampling plotted line...'
-      b, a = scipy.signal.butter(5, width / float( ind1 - ind0 ) / 2.0)
+      b, a = scipy.signal.butter(5, width / float( ind1 - ind0 ))
       filty = scipy.signal.lfilter( b, a, self._y )
 
       step = int( float( ind1 - ind0 ) / width )
       self._x = self._x[::step]
-      self._y = self._y[::step]
+      self._y = filty[::step]
 
     Line2D.draw(self, renderer)
 
@@ -237,6 +242,19 @@ class TCDAnalyze:
   
 
 
+  def onpick_adjust_w_xaxis(self, event ):
+    """Adjust the view of the top subplot"""
+    fig = gcf()
+    ax = fig.get_axes()
+    a = ax[0]
+    a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
+
+    for i in xrange( len(self.w_ax2s) ):
+      if ax[1] == self.w_ax2s[i]:
+	rect = self.w_ax2rects[i]
+	rect.set_x( event.mouseevent.xdata - 2.5 )
+
+    draw()
   def plot_w_data(self, w_set=[], saveit=True, showit=False):
     """Plot the 'w' file max velocity envelope data.
     
@@ -254,17 +272,14 @@ class TCDAnalyze:
     if w_set == []:
       w_set = self._w_set
 
-    def onpick_adjust_xaxis( event ):
-      """Adjust the view of the top subplot"""
-      fig = gcf()
-      ax = fig.get_axes()
-      a = ax[0]
-      a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
-      draw()
       
     self._read_w(w_set)
 
 
+    ## lower subplot (scout plot) for velocity envelope figure
+    self.w_ax2s = []
+    ## indicator rectangles in self.w_ax2s
+    self.w_ax2rects = []
     for file in w_set:
       print 'Plotting ', self._filename_prefix + '.tw' + file
       if self._metadata.has_key(file):
@@ -298,7 +313,7 @@ class TCDAnalyze:
 	  hity = hity + hityinc
         line = ClippedLine(ax1, [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
 	ax1.add_line(line)
-        text( float(i[0]) / sample_freq, hity+hityinc/2.0, i[1] + ' ' + i[2], color=(0.9, 0.9, 1.0),  horizontalalignment='center', fontsize=12 )
+        text( float(i[0]) / sample_freq, hity+hityinc/2.0, i[1] + ' ' + i[2], color=(0.6, 0.6, 0.8),  horizontalalignment='center', fontsize=12 )
       xlim( (0.0, 5.0) )
       l = legend( )
       lf = l.get_frame()
@@ -310,11 +325,15 @@ class TCDAnalyze:
 
       # plot bottom, general overview subplot
       ax2 = fig.add_subplot(212)
+      self.w_ax2s.append(ax2)
       ax2.set_picker(True)
-      chan1_line2 = DecimatedClippedLine(ax2, time, chan1, color='r', ls='-',  label='Channel 1', antialiased=False )
-      chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=False )
+      chan1_line2 = DecimatedClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
+      chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       ax2.add_line(chan1_line2)
       ax2.add_line(chan2_line2)
+      ax2.set_xlim( chan1.min(), chan1.max() )
+      ax2.set_ylim( min([chan1.min(), chan2.min()]), max([chan1.max(), chan2.max()]) )
+      # draw the hits
       chansmax = max([max(chan1), max(chan2)]) 
       hity = chansmax / 3.0
       for i in metadata['hits']:
@@ -323,6 +342,11 @@ class TCDAnalyze:
 	else:
 	  hity = hity + hityinc
 	plot( [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
+      # draw indicator rectangle
+      ax2ylim = ax2.get_ylim()
+      rect = Rectangle( (0.0, ax2ylim[0]), 5.0, ax2ylim[1] - ax2ylim[0], edgecolor=(0.9,0.9,1.0), lw=1, alpha=0.5)
+      ax2.add_artist(rect)
+      self.w_ax2rects.append( rect )
       ylabel('Velocity [cm/s]')
       xlabel('Time [sec] + ' + metadata['start_time'])
 
@@ -330,7 +354,7 @@ class TCDAnalyze:
 	savefig( self._filename_prefix + '_velocity_curve_' + file + '.png' )
 	savefig( self._filename_prefix + '_velocity_curve_' + file + '.eps' )
       if showit:
-	fig.canvas.mpl_connect('pick_event', onpick_adjust_xaxis)
+	fig.canvas.mpl_connect('pick_event', self.onpick_adjust_w_xaxis)
 	show()
   
 
@@ -515,6 +539,6 @@ if __name__ == "__main__":
       import sys
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
-	 t.plot_w_data(showit=False, saveit=True)
+	 t.plot_w_data(showit=True, saveit=True)
 
 
