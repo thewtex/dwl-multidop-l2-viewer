@@ -10,6 +10,7 @@ from pylab import *
 import os
 import glob
 
+import scipy.signal
 
 
 # adjusted from /usr/share/doc/matplotlib-0.91.2/examples/clippedline.py
@@ -20,12 +21,15 @@ class ClippedLine(Line2D):
 
     def __init__(self, ax, *args, **kwargs):
         Line2D.__init__(self, *args, **kwargs)
+	## axes the line is plotted in
         self.ax = ax
 
 
     def set_data(self, *args, **kwargs):
         Line2D.set_data(self, *args, **kwargs)
+	## what is plotted pre-clipping
         self.xorig = npy.array(self._x)
+	## what is plotted pre-clipping
         self.yorig = npy.array(self._y)
 
     def draw(self, renderer):
@@ -36,6 +40,56 @@ class ClippedLine(Line2D):
         self._y = self.yorig[ind0:ind1]
 
         Line2D.draw(self, renderer)
+
+
+
+class DecimatedClippedLine(Line2D):
+  """
+  Decimate and clip the data so it does not take as long to plot.  Assumes data is sorted and equally spaced.
+  """
+
+  def __init__(self, ax, *args, **kwargs):
+    """
+    *Parameters*:
+      ax:
+	axes the line is plotted on
+
+      *args, **kwargs:
+	Line2D args
+
+    """
+    Line2D.__init__(self, *args, **kwargs)
+    ## axes the line is plotted in
+    self.ax = ax
+
+
+  def set_data(self, *args, **kwargs):
+    Line2D.set_data(self, *args, **kwargs)
+    ## data preclipping and decimation
+    self.xorig = npy.array(self._x)
+    ## data pre clipping and decimation
+    self.yorig = npy.array(self._y)
+
+
+  def draw(self, renderer):
+    bb = self.ax.get_window_extent()
+    width = bb.width()
+
+    xlim = self.ax.get_xlim()
+    ind0, ind1 = npy.searchsorted(self.xorig, xlim)
+
+    self._x = self.xorig[ind0:ind1]
+    self._y = self.yorig[ind0:ind1]
+    if width / float( ind1 - ind0 ) < 0.4: # if number of points to plot is much greater than the pixels in the plot
+      print 'downsampling plotted line...'
+      b, a = scipy.signal.butter(5, width / float( ind1 - ind0 ) / 2.0)
+      filty = scipy.signal.lfilter( b, a, self._y )
+
+      step = int( float( ind1 - ind0 ) / width )
+      self._x = self._x[::step]
+      self._y = self._y[::step]
+
+    Line2D.draw(self, renderer)
 
 
 
@@ -230,6 +284,7 @@ class TCDAnalyze:
       hity = chansmax / 3.0
       hityinc = chansmax/11.0
 
+      # plot top, close examination subplot
       ax1 = fig.add_subplot(211)
       ax1.set_ylim(chansmin, chansmax)
       chan1_line1 = ClippedLine(ax1, time, chan1, color='r', ls='-',  label='Channel 1', markersize=0 )
@@ -253,10 +308,13 @@ class TCDAnalyze:
       ylabel('Velocity [cm/s]')
       grid(b=True, color=(0.3, 0.3, 0.3))
 
+      # plot bottom, general overview subplot
       ax2 = fig.add_subplot(212)
       ax2.set_picker(True)
-      plot( time, chan1, 'r-',  label='Channel 1', antialiased=False )
-      plot( time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=False )
+      chan1_line2 = DecimatedClippedLine(ax2, time, chan1, color='r', ls='-',  label='Channel 1', antialiased=False )
+      chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=False )
+      ax2.add_line(chan1_line2)
+      ax2.add_line(chan2_line2)
       chansmax = max([max(chan1), max(chan2)]) 
       hity = chansmax / 3.0
       for i in metadata['hits']:
@@ -386,6 +444,7 @@ class TCDAnalyze:
 	show()
 
 
+  ## @warning this is incomplete, and may be incorrect
   def get_d_set(self):
     """Return the set containing #'s in filename_prefix + .td#."""
     return self._d_set
@@ -422,6 +481,7 @@ class TCDAnalyze:
 
   def get_d_data(self, d_set=[]):
     """Return the 'd' file doppler data.
+
     *Parameters*:
       d_set:
 	subset of the self._d_set to read, defaults to the entire set
@@ -433,6 +493,7 @@ class TCDAnalyze:
 
   def get_w_data(self, w_set=[]):
     """Return the 'w' file average velocity data.
+
     *Parameters*:
       w_set:
 	subset of the self._w_set to read, defaults to the entire set
@@ -454,6 +515,6 @@ if __name__ == "__main__":
       import sys
       for arg in sys.argv[1:] :
 	 t = TCDAnalyze(arg)
-	 t.plot_w_data(showit=True)
+	 t.plot_w_data(showit=False, saveit=True)
 
 
