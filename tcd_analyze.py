@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-
-# tcd_analyze.py
-# for processing the transcranial doppler data
-# Matt McCormick (thewtex) <matt@mmmccormick.com>
-# 2008 March 15
+## @package tcd_analyze
+#   for processing the transcranial doppler data generated on a DWL Multidop L2
+#
+#   @author Matt McCormick (thewtex) <matt@mmmccormick.com>
+#   @date created 2008 March 15
 
 from pylab import *
 
@@ -11,6 +11,9 @@ import os
 import glob
 
 import scipy.signal
+
+from optparse import OptionParser
+
 
 
 # adjusted from /usr/share/doc/matplotlib-0.91.2/examples/clippedline.py
@@ -28,17 +31,17 @@ class ClippedLine(Line2D):
     def set_data(self, *args, **kwargs):
         Line2D.set_data(self, *args, **kwargs)
 	## what is plotted pre-clipping
-        self.xorig = npy.array(self._x)
+        self._xorig = npy.array(self._x)
 	## what is plotted pre-clipping
-        self.yorig = npy.array(self._y)
+        self._yorig = npy.array(self._y)
 
     def draw(self, renderer):
         xlim = self.ax.get_xlim()
 
-        ind0 = npy.searchsorted(self.xorig, xlim[0], side='left')
-        ind1 = npy.searchsorted(self.xorig, xlim[1], side='right')
-        self._x = self.xorig[ind0:ind1]
-        self._y = self.yorig[ind0:ind1]
+        ind0 = npy.searchsorted(self._xorig, xlim[0], side='left')
+        ind1 = npy.searchsorted(self._xorig, xlim[1], side='right')
+        self._x = self._xorig[ind0:ind1]
+        self._y = self._yorig[ind0:ind1]
 
         Line2D.draw(self, renderer)
 
@@ -67,9 +70,9 @@ class DecimatedClippedLine(Line2D):
   def set_data(self, *args, **kwargs):
     Line2D.set_data(self, *args, **kwargs)
     ## data preclipping and decimation
-    self.xorig = npy.array(self._x)
+    self._xorig = npy.array(self._x)
     ## data pre clipping and decimation
-    self.yorig = npy.array(self._y)
+    self._yorig = npy.array(self._y)
 
 
   def draw(self, renderer):
@@ -77,18 +80,17 @@ class DecimatedClippedLine(Line2D):
     width = bb.width()
 
     xlim = self.ax.get_xlim()
-    ind0 = npy.searchsorted(self.xorig, xlim[0], side='left')
-    ind1 = npy.searchsorted(self.xorig, xlim[1], side='right')
+    ind0 = npy.searchsorted(self._xorig, xlim[0], side='left')
+    ind1 = npy.searchsorted(self._xorig, xlim[1], side='right')
 
-    self._x = self.xorig[ind0:ind1]
-    self._y = self.yorig[ind0:ind1]
+    self._x = self._xorig[ind0:ind1]
+    self._y = self._yorig[ind0:ind1]
 
     if self.ax.get_autoscale_on():
-      ylim = self.ax.get_xlim()
+      ylim = self.ax.get_ylim()
       self.ax.set_ylim( min([ylim[0], self._y.min()]), max([ylim[1], self._y.max()]) )
 
     if width / float( ind1 - ind0 ) < 0.4: # if number of points to plot is much greater than the pixels in the plot
-      print 'downsampling plotted line...'
       b, a = scipy.signal.butter(5, width / float( ind1 - ind0 ))
       filty = scipy.signal.lfilter( b, a, self._y )
 
@@ -244,16 +246,16 @@ class TCDAnalyze:
   
 
 
-  def onpick_adjust_w_xaxis(self, event ):
+  def _onpick_adjust_w_xaxis(self, event ):
     """Adjust the view of the top subplot"""
     fig = gcf()
     ax = fig.get_axes()
     a = ax[0]
     a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
 
-    for i in xrange( len(self.w_ax2s) ):
-      if ax[1] == self.w_ax2s[i]:
-	rect = self.w_ax2rects[i]
+    for i in xrange( len(self._w_ax2s) ):
+      if ax[1] == self._w_ax2s[i]:
+	rect = self._w_ax2rects[i]
 	rect.set_x( event.mouseevent.xdata - 2.5 )
 
     draw()
@@ -279,9 +281,9 @@ class TCDAnalyze:
 
 
     ## lower subplot (scout plot) for velocity envelope figure
-    self.w_ax2s = []
-    ## indicator rectangles in self.w_ax2s
-    self.w_ax2rects = []
+    self._w_ax2s = []
+    ## indicator rectangles in self._w_ax2s
+    self._w_ax2rects = []
     for file in w_set:
       print 'Plotting ', self._filename_prefix + '.tw' + file
       if self._metadata.has_key(file):
@@ -327,7 +329,7 @@ class TCDAnalyze:
 
       # plot bottom, general overview subplot
       ax2 = fig.add_subplot(212)
-      self.w_ax2s.append(ax2)
+      self._w_ax2s.append(ax2)
       ax2.set_picker(True)
       chan1_line2 = DecimatedClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
       chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
@@ -348,7 +350,7 @@ class TCDAnalyze:
       ax2ylim = ax2.get_ylim()
       rect = Rectangle( (0.0, ax2ylim[0]), 5.0, ax2ylim[1] - ax2ylim[0], edgecolor=(0.9,0.9,1.0), lw=1, alpha=0.5)
       ax2.add_artist(rect)
-      self.w_ax2rects.append( rect )
+      self._w_ax2rects.append( rect )
       ylabel('Velocity [cm/s]')
       xlabel('Time [sec] + ' + metadata['start_time'])
 
@@ -356,7 +358,7 @@ class TCDAnalyze:
 	savefig( self._filename_prefix + '_velocity_curve_' + file + '.png' )
 	savefig( self._filename_prefix + '_velocity_curve_' + file + '.eps' )
       if showit:
-	fig.canvas.mpl_connect('pick_event', self.onpick_adjust_w_xaxis)
+	fig.canvas.mpl_connect('pick_event', self._onpick_adjust_w_xaxis)
 	show()
   
 
@@ -539,8 +541,27 @@ class TCDAnalyze:
 # if running as script
 if __name__ == "__main__":
       import sys
-      for arg in sys.argv[1:] :
-	 t = TCDAnalyze(arg)
-	 t.plot_w_data(showit=True, saveit=True)
+
+      usage = """usage: %prog [options] <fileprefix>
+
+<fileprefix> is the filename prefix of the DWL Multidop L2 files.
+
+E.g., if you have 'nla168.tx0' and 'nla168.tw0'
+in the current directory <fileprefix> = 'nla168'"""
+      parser = OptionParser(usage=usage)
+
+      parser.add_option("-n", "--no-show", help="Do not display the generated plots on screen", dest="showit", action="store_false", default=True)
+      parser.add_option("-s", "--save", help="Save the generated plots", dest="saveit", action="store_true", default=False)
+      parser.add_option("-t", "--trials", dest="trials", help="Comma separated list of the trials to process, e.g. if you had 'nla168.tx0', 'nla168.tx1', and 'nla168.tx2' and the corresponding '*.tw*' files in the current directory, you issue --trials=1,2 to process only the second and third trials.  Defaults to all trials.", default='[]' )
+
+      options, args = parser.parse_args()
+
+      t = TCDAnalyze(args[0])
+      trials = []
+      if options.trials != '[]':
+	for i in options.trials.split(','):
+	  trials.append(i)
+
+      t.plot_w_data(w_set=trials, showit=options.showit, saveit=options.saveit)
 
 
