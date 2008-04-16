@@ -129,7 +129,7 @@ class TCDAnalyze:
 
   def __init__(self, filename_prefix):
     # argument checking
-    if (glob.glob(filename_prefix + '.tw*') == []) and (glob.glob(filename_prefix + '.td*') == []) :
+    if (glob.glob(filename_prefix + '.tw[0-9]') == []) and (glob.glob(filename_prefix + '.td[0-9]') == []) :
 	e = ExtensionError( filename_prefix, '.tw* or .td*')
 	raise e
 
@@ -145,7 +145,7 @@ class TCDAnalyze:
 
     prefixes = ['.tx', '.tw', '.td']
     for prefix in prefixes:
-      for file in glob.glob(filename_prefix + prefix + '*'):
+      for file in glob.glob(filename_prefix + prefix + '[0-9]'):
 	if prefix == '.tx':
           self._x_set.add( file[ file.rindex( prefix )+3: ] )
 	elif prefix == '.tw':
@@ -335,7 +335,7 @@ class TCDAnalyze:
       chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       ax2.add_line(chan1_line2)
       ax2.add_line(chan2_line2)
-      ax2.set_xlim( chan1.min(), chan1.max() )
+      ax2.set_xlim( time.min(), time.max() )
       ax2.set_ylim( min([chan1.min(), chan2.min()]), max([chan1.max(), chan2.max()]) )
       # draw the hits
       chansmax = max([max(chan1), max(chan2)]) 
