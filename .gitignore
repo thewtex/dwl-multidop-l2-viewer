@@ -1,3 +1,4 @@
 *.pyc
 *.swp
 doc/doxygen_documentation/*
+dist
