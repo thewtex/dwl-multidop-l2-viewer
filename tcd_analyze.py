@@ -35,7 +35,8 @@ class ClippedLine(Line2D):
     def draw(self, renderer):
         xlim = self.ax.get_xlim()
 
-        ind0, ind1 = npy.searchsorted(self.xorig, xlim)
+        ind0 = npy.searchsorted(self.xorig, xlim[0], side='left')
+        ind1 = npy.searchsorted(self.xorig, xlim[1], side='right')
         self._x = self.xorig[ind0:ind1]
         self._y = self.yorig[ind0:ind1]
 
@@ -76,7 +77,8 @@ class DecimatedClippedLine(Line2D):
     width = bb.width()
 
     xlim = self.ax.get_xlim()
-    ind0, ind1 = npy.searchsorted(self.xorig, xlim)
+    ind0 = npy.searchsorted(self.xorig, xlim[0], side='left')
+    ind1 = npy.searchsorted(self.xorig, xlim[1], side='right')
 
     self._x = self.xorig[ind0:ind1]
     self._y = self.yorig[ind0:ind1]
