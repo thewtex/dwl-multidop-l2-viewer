@@ -129,28 +129,28 @@ class TCDAnalyze:
 
   def __init__(self, filename_prefix):
     # argument checking
-    if (glob.glob(filename_prefix + '.tw[0-9]') == []) and (glob.glob(filename_prefix + '.td[0-9]') == []) :
-	e = ExtensionError( filename_prefix, '.tw* or .td*')
+    if (glob.glob(filename_prefix + '.TW[0-9]') == []) and (glob.glob(filename_prefix + '.TD[0-9]') == []) :
+	e = ExtensionError( filename_prefix, '.TW* or .TD*')
 	raise e
 
     ## [qualified] filename prefix, e.g. 'nla168'
     self._filename_prefix = filename_prefix
 
-    ## set containing #'s in filename_prefix + .tx#
+    ## set containing #'s in filename_prefix + .TX#
     self._x_set = set()
-    ## set containing #'s in filename_prefix + .tw#
+    ## set containing #'s in filename_prefix + .TW#
     self._w_set = set()
-    ## set containing #'s in filename_prefix + .td#
+    ## set containing #'s in filename_prefix + .TD#
     self._d_set = set()
 
-    prefixes = ['.tx', '.tw', '.td']
+    prefixes = ['.TX', '.TW', '.TD']
     for prefix in prefixes:
       for file in glob.glob(filename_prefix + prefix + '[0-9]'):
-	if prefix == '.tx':
+	if prefix == '.TX':
           self._x_set.add( file[ file.rindex( prefix )+3: ] )
-	elif prefix == '.tw':
+	elif prefix == '.TW':
           self._w_set.add( file[ file.rindex( prefix )+3: ] )
-	elif prefix == '.td':
+	elif prefix == '.TD':
           self._d_set.add( file[ file.rindex( prefix )+3: ] )
 	else:
 	  e = ExtensionError( 'unexpected, unknown extension, ' + prefix )
@@ -186,20 +186,23 @@ class TCDAnalyze:
 
       return metadata
 
-    ## default metadata -- used if a '.tx#' file does not exist
+    ## default metadata -- used if a '.TX#' file does not exist
     self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
 
-    ## metadata extracted from the '.tx*' files
+    ## metadata extracted from the '.TX*' files
     self._metadata = dict()
     for file in self._x_set:
-      self._metadata[file] = __parse_metadata(self._filename_prefix + '.tx' + file)
+      self._metadata[file] = __parse_metadata(self._filename_prefix + '.TX' + file)
+
+    ## default figure size
+    self._default_fig_size = (9,10)
   
 
 
 
   
   def _read_w(self, w_set=[]):
-    """Read the 'filename_prefix.tw*' (doppler max velocity envelope) files.
+    """Read the 'filename_prefix.TW*' (doppler max velocity envelope) files.
 
     *Parameters*:
       w_set:
@@ -220,7 +223,7 @@ class TCDAnalyze:
 
 
     for file in w_set:
-      filename = self._filename_prefix + '.tw' + file 
+      filename = self._filename_prefix + '.TW' + file 
       f = open(filename, 'rb')
       f_size = os.path.getsize(filename)
       print 'Reading ', filename
@@ -250,15 +253,25 @@ class TCDAnalyze:
     """Adjust the view of the top subplot"""
     fig = gcf()
     ax = fig.get_axes()
-    a = ax[0]
-    a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
 
+    ax_top = ax[0]
+    ax_mid = ax[1]
+
+    ax_picked = event.artist
+    
     for i in xrange( len(self._w_ax2s) ):
-      if ax[1] == self._w_ax2s[i]:
+      if ax_picked == self._w_ax2s[i]:
+	ax_top.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
 	rect = self._w_ax2rects[i]
 	rect.set_x( event.mouseevent.xdata - 2.5 )
+      elif ax_picked == self._w_ax3s[i]:
+	ax_mid.set_xlim( event.mouseevent.xdata - 50.0, event.mouseevent.xdata + 50.0 )
+	rect = self._w_ax3rects[i]
+	rect.set_x( event.mouseevent.xdata - 50.0 )
 
     draw()
+
+
   def plot_w_data(self, w_set=[], saveit=True, showit=False):
     """Plot the 'w' file max velocity envelope data.
     
@@ -280,12 +293,18 @@ class TCDAnalyze:
     self._read_w(w_set)
 
 
-    ## lower subplot (scout plot) for velocity envelope figure
+    ## bottom subplot (scout plot) for velocity envelope figure
+    #  views the entire signal
+    self._w_ax3s = []
+    ## middle subplot (scout plot) for velocity envelope figure
+    #  views a shorter duration segment
     self._w_ax2s = []
+    ## indicator rectangles in self._w_ax3s
+    self._w_ax3rects = []
     ## indicator rectangles in self._w_ax2s
     self._w_ax2rects = []
     for file in w_set:
-      print 'Plotting ', self._filename_prefix + '.tw' + file
+      print 'Plotting ', self._filename_prefix + '.TW' + file
       if self._metadata.has_key(file):
 	metadata = self._metadata[file]
       else:
@@ -296,7 +315,7 @@ class TCDAnalyze:
       time = arange( len(chan1) ) / sample_freq
 
 
-      fig = figure(int(file))
+      fig = figure(int(file), figsize=self._default_fig_size)
 
       chansmax = max([chan1.max(), chan2.max()]) 
       chansmin = min([chan1.min(), chan2.min()])
@@ -304,7 +323,7 @@ class TCDAnalyze:
       hityinc = chansmax/11.0
 
       # plot top, close examination subplot
-      ax1 = fig.add_subplot(211)
+      ax1 = fig.add_subplot(311)
       ax1.set_ylim(chansmin, chansmax)
       chan1_line1 = ClippedLine(ax1, time, chan1, color='r', ls='-',  label='Channel 1', markersize=0 )
       chan2_line1 = ClippedLine(ax1, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
@@ -327,15 +346,15 @@ class TCDAnalyze:
       ylabel('Velocity [cm/s]')
       grid(b=True, color=(0.3, 0.3, 0.3))
 
-      # plot bottom, general overview subplot
-      ax2 = fig.add_subplot(212)
+      # plot middle, medium zoom
+      ax2 = fig.add_subplot(312)
       self._w_ax2s.append(ax2)
       ax2.set_picker(True)
       chan1_line2 = DecimatedClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
       chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       ax2.add_line(chan1_line2)
       ax2.add_line(chan2_line2)
-      ax2.set_xlim( time.min(), time.max() )
+      ax2.set_xlim( 0.0, 20.0 )
       ax2.set_ylim( min([chan1.min(), chan2.min()]), max([chan1.max(), chan2.max()]) )
       # draw the hits
       chansmax = max([max(chan1), max(chan2)]) 
@@ -352,6 +371,34 @@ class TCDAnalyze:
       ax2.add_artist(rect)
       self._w_ax2rects.append( rect )
       ylabel('Velocity [cm/s]')
+
+
+
+      # plot bottom, general overview subplot
+      ax3 = fig.add_subplot(313)
+      self._w_ax3s.append(ax3)
+      ax3.set_picker(True)
+      chan1_line2 = DecimatedClippedLine(ax3, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
+      chan2_line2 = DecimatedClippedLine(ax3, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
+      ax3.add_line(chan1_line2)
+      ax3.add_line(chan2_line2)
+      ax3.set_xlim( time.min(), time.max() )
+      ax3.set_ylim( min([chan1.min(), chan2.min()]), max([chan1.max(), chan2.max()]) )
+      # draw the hits
+      chansmax = max([max(chan1), max(chan2)]) 
+      hity = chansmax / 3.0
+      for i in metadata['hits']:
+	if hity > chansmax* 2.0/3.0:
+	  hity = chansmax/ 3.0
+	else:
+	  hity = hity + hityinc
+	plot( [float(i[0]) / sample_freq], [hity], color=(0.9, 0.9, 1.0), marker='o', markeredgewidth=2, markeredgecolor='blue')
+      # draw indicator rectangle
+      ax3ylim = ax3.get_ylim()
+      rect = Rectangle( (0.0, ax3ylim[0]), 100.0, ax3ylim[1] - ax3ylim[0], edgecolor=(0.9,0.9,1.0), lw=1, alpha=0.5)
+      ax3.add_artist(rect)
+      self._w_ax3rects.append( rect )
+      ylabel('Velocity [cm/s]')
       xlabel('Time [sec] + ' + metadata['start_time'])
 
       if saveit:
@@ -366,7 +413,7 @@ class TCDAnalyze:
 
   ## @warning this is incomplete, and possibly incorrect
   def _read_d(self,  d_set=[]):
-    """Read the 'filename_prefix.td*' (doppler spectrum) files.
+    """Read the 'filename_prefix.TD*' (doppler spectrum) files.
 
     *Parameters*:
       d_set:
@@ -393,7 +440,7 @@ class TCDAnalyze:
 
 
     for file in d_set:
-      filename = self._filename_prefix + '.td' + file 
+      filename = self._filename_prefix + '.TD' + file 
       f = open( filename, 'rb' )
       f_size = os.path.getsize(filename)
       print 'Reading ', filename
@@ -474,15 +521,15 @@ class TCDAnalyze:
 
   ## @warning this is incomplete, and may be incorrect
   def get_d_set(self):
-    """Return the set containing #'s in filename_prefix + .td#."""
+    """Return the set containing #'s in filename_prefix + .TD#."""
     return self._d_set
   
   def get_w_set(self):
-    """Return the set containing #'s in filename_prefix + .tw#."""
+    """Return the set containing #'s in filename_prefix + .TW#."""
     return self._w_set
 
   def get_metadata(self):
-    """Return metadata extracted from the '.tx*' files.
+    """Return metadata extracted from the '.TX*' files.
       
       metadata has the following dictionary keys:
 	patient_name:
@@ -546,13 +593,13 @@ if __name__ == "__main__":
 
 <fileprefix> is the filename prefix of the DWL Multidop L2 files.
 
-E.g., if you have 'nla168.tx0' and 'nla168.tw0'
+E.g., if you have 'nla168.TX0' and 'nla168.TW0'
 in the current directory <fileprefix> = 'nla168'"""
       parser = OptionParser(usage=usage)
 
       parser.add_option("-n", "--no-show", help="Do not display the generated plots on screen", dest="showit", action="store_false", default=True)
       parser.add_option("-s", "--save", help="Save the generated plots", dest="saveit", action="store_true", default=False)
-      parser.add_option("-t", "--trials", dest="trials", help="Comma separated list of the trials to process, e.g. if you had 'nla168.tx0', 'nla168.tx1', and 'nla168.tx2' and the corresponding '*.tw*' files in the current directory, you issue --trials=1,2 to process only the second and third trials.  Defaults to all trials.", default='[]' )
+      parser.add_option("-t", "--trials", dest="trials", help="Comma separated list of the trials to process, e.g. if you had 'nla168.TX0', 'nla168.TX1', and 'nla168.TX2' and the corresponding '*.TW*' files in the current directory, you issue --trials=1,2 to process only the second and third trials.  Defaults to all trials.", default='[]' )
 
       options, args = parser.parse_args()
 
