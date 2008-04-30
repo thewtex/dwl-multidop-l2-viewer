@@ -20,7 +20,7 @@ if dialog.ShowModal() == wx.ID_OK:
   filenamesplit = os.path.splitext(filename)
   dirname = dialog.GetDirectory()
   full = os.path.join(dirname, filenamesplit[0])
-  print Selected: os.path.join(dirname, filename)
+  print 'Selected:', os.path.join(dirname, filename)
 
   t = tcd(full)
   t.plot_w_data(w_set=[filenamesplit[1][-1]], saveit=False, showit=True)
