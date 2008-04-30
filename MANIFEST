@@ -1,6 +1,5 @@
 setup.py
 tcd_analyze.py
-tcd_dialog.py
 readme.txt
 legal.txt
 doc/Doxyfile

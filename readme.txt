@@ -5,14 +5,10 @@ Purpose:
 
 
 Dependencies:
-  You will also need python, wxpython, numpy, and matplotlib.  
+  You will also need python, numpy, and matplotlib.  
   See:
   http://python.org
   http://scipy.org
-  http://wxpython.org
-
-  They are all conveniently packages together in Enthought Python Distribution
-  http://www.enthought.com/products/epd.php
 
 
 Installation:
@@ -21,7 +17,7 @@ Installation:
 
 
 Running:
-  You will need to get the *.TX* and *.TW files off the machine.  You may
+  You will need to get the *.tx* and *.tw* files off the machine.  You may
   find BG-Rescue Linux helpful for this
   http://www.giannone.eu/rescue/current/
 
@@ -29,9 +25,6 @@ Running:
   installs a 'tcd_analyze.py' script.  
     process_directory.py -h
   for help.
-
-  Also installs a graphical file picker
-    tcd_dialog.py
 
 
 Author:
