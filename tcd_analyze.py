@@ -311,24 +311,58 @@ class TCDAnalyze:
 
     draw()
 
+
+
   def _onpick_select_hit(self, event ):
     """Change the color and the label of the hit"""
-    print 'ya here'
     if not isinstance(event.artist, ClippedLine):
       return
 
-    print event.artist.get_xdata()
+    fig = gcf()
+    file = fig.get_label()
+    if self._metadata.has_key(file):
+	metadata = self._metadata[file]
+    else:
+	metadata = self._default_metadata
+    sample_freq = float( metadata['sample_freq'])
+
+    chosen_x =  event.artist.get_xdata()
+    chosen_x = chosen_x[0]
+    # colors
+    affirmed_c='#FFAA18'
+    affirmed_mec='#86590D'
+    denied_c='#CC19DC'
+    denied_mec='#550A5C'
+
+    num_hits = len(metadata['hits'])
+    i = 0
+    located = False
+    while ( i < num_hits ) and (not located):
+      if float(metadata['hits'][i][0]) / sample_freq == chosen_x:
+	located = True
+	if event.mouseevent.button == 1:
+	  self._metadata[file]['hits'][i] = metadata['hits'][i][:3] + ('Affirmed',)
+	  event.artist.set_color(affirmed_c)
+	  event.artist.set_markeredgecolor(affirmed_mec)
+	else:
+	  self._metadata[file]['hits'][i] = metadata['hits'][i][:3] + ('Denied',)
+	  event.artist.set_color(denied_c)
+	  event.artist.set_markeredgecolor(denied_mec)
+      i = i+1
+    if not located:
+      raise ValueError
+
 
 
   def _save_or_close(self, event):
     """write to the output file and close the application"""
     fig = gcf()
     self._current_trial = fig.get_label()
-    print event.mouseevent.ydata
     if event.artist.get_label() ==  'save':
       self._write_hits()
     else:
       close('all')
+
 
   def plot_w_data(self, w_set=[], saveit=True, showit=False):
     """Plot the 'w' file max velocity envelope data.
@@ -399,12 +433,8 @@ class TCDAnalyze:
       def plot_hits(ax, hity, chansmax):
         """Plot hits as points on the given axis."""
         # colors
-        unchecked_c=(0.9,0.9,1.0)
-        unchecked_mec='blue'
-        affirmed_c='#FFAA18'
-        affirmed_mec='#86590D'
-        denied_c='#CC19DC'
-        denied_mec='#550A5C'
+        hit_c=(0.9,0.9,1.0)
+        hit_mec='blue'
   
         for i in metadata['hits']:
 	  if hity > chansmax* 2.0/3.0:
@@ -412,17 +442,6 @@ class TCDAnalyze:
 	  else:
 	   hity = hity + hityinc
       	
-	  if i[3] == 'Unchecked':
-        	  hit_c = unchecked_c
-        	  hit_mec = unchecked_mec
-	  elif i[3] == 'Affirmed':
-	   hit_c = affirmed_c
-	   hit_mec = affirmed_mec
-	  elif i[3] == 'Denied':
-	   hit_c = denied_c
-	   hit_mec = denied_mec
-	  else:
-	   raise ValueError, i[3]
           line = ClippedLine(ax, [float(i[0]) / sample_freq], [hity], color=hit_c , marker='o', markeredgewidth=2, markeredgecolor=hit_mec, picker=7.0)
 	  ax.add_line(line)
 
