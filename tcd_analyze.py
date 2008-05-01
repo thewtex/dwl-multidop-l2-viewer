@@ -161,16 +161,18 @@ class TCDAnalyze:
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
 
-      metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
+      metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
       
       lines = f.readlines()
       for i in xrange(len(lines)):
 	lis = lines[i].split()
 	if lis[1] == 'HIT':
 	  ts = lis[3].split(':')
-	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3] ) ) 
+	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3], 'Unchecked' ) ) 
         elif ( lis[2] == 'NAME:' ):
-	  metadata['patient_name'] = lis[3]
+	  metadata['patient_name'] = lines[i][lines[i].rfind('NAME:')+6:-2]
+        elif ( lis[2] == 'EXAM:' ):
+	  metadata['exam_date'] = lis[3]
 	elif ( lis[2] == 'PRF' ):	
 	  metadata['prf'] = int(lis[3])
 	elif ( lis[2] == 'SAMPLE_F' ):	
@@ -187,7 +189,7 @@ class TCDAnalyze:
       return metadata
 
     ## default metadata -- used if a '.TX#' file does not exist
-    self._default_metadata = {'patient_name':'unknown patient', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
+    self._default_metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
 
     ## metadata extracted from the '.TX*' files
     self._metadata = dict()
@@ -196,8 +198,11 @@ class TCDAnalyze:
 
     ## default figure size
     self._default_fig_size = (9,10)
-  
 
+    ## current trial being processed
+    self._current_trial = '0'
+
+  
 
 
   
@@ -246,6 +251,38 @@ class TCDAnalyze:
 
       f.close()
   
+  def _write_hits(self):
+      file = self._current_trial
+      if self._metadata.has_key(file):
+	metadata = self._metadata[file]
+      else:
+	metadata = self._default_metadata
+      outfile = self._filename_prefix + '_' + file + '_' + metadata['patient_name'].replace(' ','_') + '_' + 'hits.csv' 
+      
+      print 'Saving ', outfile
+
+      f = open(outfile, 'w')
+      f.write(metadata['patient_name'] + ', trial ' + file + '\n')
+      f.write('Examined on ' + metadata['exam_date'] + '\n')
+      from datetime import date
+      today = date.today()
+      f.write('Analyzed on ' + today.isoformat() + '\n')
+      asses_l = []
+      for hit in metadata['hits']:
+	asses_l.append(hit[3])
+      f.write( 'Total hits: ' + str(len(metadata['hits'])) + '\n')
+      f.write( 'Affirmed: ' + str(asses_l.count('Affirmed')) + '\n' )
+      f.write( 'Denied: ' + str(asses_l.count('Denied')) + '\n' )
+      f.write( 'Unchecked: ' + str(asses_l.count('Unchecked')) + '\n')
+
+
+      f.write('Hit time, Hit level above background, Assessment\n')
+      for hit in metadata['hits']:
+	f.write( str(hit[2]) + ',' + str(hit[1]) + ',' + hit[3] + '\n' )
+
+      f.close()
+
+    
   
 
 
@@ -271,6 +308,10 @@ class TCDAnalyze:
 
     draw()
 
+  def _close(self, event):
+    """write to the output file and close the application"""
+    self._write_hits()
+    close('all')
 
   def plot_w_data(self, w_set=[], saveit=True, showit=False):
     """Plot the 'w' file max velocity envelope data.
@@ -293,6 +334,19 @@ class TCDAnalyze:
     self._read_w(w_set)
 
 
+    # informational window
+    fig_info = figure(figsize=(4.3,5.4), facecolor=(0.2,0.2,0.2))
+
+    instructions='Instructions:\n--------------------\nData Navigation:\nbottom plot: all data\nmiddle plot: 100 sec selected from bottom\ntop plot: 5 sec selected from middle\nbuttons on bottom: saving and additional zooming\n----------\nHits Selection:\nin top plot\n left click to mark Affirm\n right click to mark Deny\n----------'
+
+    figtext( 0.5, 0.2, instructions, figure=fig_info, va='bottom', ha='center', backgroundcolor='k', color='w', visible='True', fontsize=12.0, linespacing=1.8)
+    figtext( 0.5, 0.1, 'Click here when finished', figure=fig_info, va='center', ha='center', backgroundcolor=(0.1,0.1,0.4), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
+
+    fig_info.canvas.mpl_connect('pick_event',self._close)
+
+      
+
+
     ## bottom subplot (scout plot) for velocity envelope figure
     #  views the entire signal
     self._w_ax3s = []
@@ -305,6 +359,7 @@ class TCDAnalyze:
     self._w_ax2rects = []
     for file in w_set:
       print 'Plotting ', self._filename_prefix + '.TW' + file
+      self._current_trial = file
       if self._metadata.has_key(file):
 	metadata = self._metadata[file]
       else:
