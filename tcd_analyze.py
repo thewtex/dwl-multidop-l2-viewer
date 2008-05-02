@@ -351,6 +351,7 @@ class TCDAnalyze:
       i = i+1
     if not located:
       raise ValueError
+    draw()
 
 
 
