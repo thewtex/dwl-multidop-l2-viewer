@@ -388,7 +388,7 @@ class TCDAnalyze:
     # informational window
     fig_info = figure(10, figsize=(4.3,5.4), facecolor=(0.2,0.2,0.2))
 
-    instructions='Instructions:\n--------------------\nData Navigation:\nbottom plot: all data\nmiddle plot: 100 sec selected from bottom\ntop plot: 5 sec selected from middle\nbuttons on bottom: saving and additional zooming\n----------\nHits Selection:\nin top plot\n left click to mark Affirm\n right click to mark Deny\n----------'
+    instructions='Instructions:\n--------------------\nData Navigation:\nbottom plot: all data\nmiddle plot: 100 sec selected from bottom\ntop plot: 5 sec selected from middle\nbuttons on bottom: saving and additional zooming\n----------\nHits Selection:\n left click to mark Affirm\n right click to mark Deny\n----------'
 
     figtext( 0.5, 0.3, instructions, figure=fig_info, va='bottom', ha='center', backgroundcolor='k', color='w', visible='True', fontsize=12.0, linespacing=1.8)
     figtext( 0.5, 0.15, 'Click here to save\n current plot\'s picks', label='save', linespacing=1.6, figure=fig_info, va='center', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
