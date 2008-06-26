@@ -170,7 +170,7 @@ class TCDAnalyze:
 	  ts = lis[3].split(':')
 	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3], 'Unchecked' ) ) 
         elif ( lis[2] == 'NAME:' ):
-	  metadata['patient_name'] = lines[i][lines[i].rfind('NAME:')+6:-2]
+	  metadata['patient_name'] = lines[i][lines[i].rfind('NAME:')+6:-1]
         elif ( lis[2] == 'EXAM:' ):
 	  metadata['exam_date'] = lis[3]
 	elif ( lis[2] == 'PRF' ):	
