@@ -11,6 +11,7 @@ import os
 import glob
 
 import scipy.signal
+import numpy as npy
 
 from optparse import OptionParser
 
@@ -167,7 +168,6 @@ class TCDAnalyze:
       for i in xrange(len(lines)):
 	lis = lines[i].split()
 	if lis[1] == 'HIT':
-	  ts = lis[3].split(':')
 	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3], 'Unchecked' ) ) 
         elif ( lis[2] == 'NAME:' ):
 	  metadata['patient_name'] = lines[i][lines[i].rfind('NAME:')+6:-1]
@@ -437,14 +437,40 @@ class TCDAnalyze:
         hit_c=(0.9,0.9,1.0)
         hit_mec='blue'
   
+	differences=[]
         for i in metadata['hits']:
 	  if hity > chansmax* 2.0/3.0:
 	   hity = chansmax/ 3.0
 	  else:
 	   hity = hity + hityinc
       	
-          line = ClippedLine(ax, [float(i[0]) / sample_freq], [hity], color=hit_c , marker='o', markeredgewidth=2, markeredgecolor=hit_mec, picker=7.0)
+	  hittime1 = float(i[0]) / sample_freq
+
+	  ##### use the hr:min:sec recording
+	  ## startime[0] = hour
+	  ## starttime[1] = minute
+	  ## starttime[2] = second
+	  #starttime = [ int(x) for x in metadata['start_time'].split(':') ]
+	  #curtime = [ int(x) for x in i[2].split(':') ]
+	  ## deal with clock wrap around, assuming 
+	  ## the examine takes less than 24 hrs :P
+	  #if curtime[0] >=  starttime[0] :
+	    #sep_hours = (curtime[0]-starttime[0])*3600
+	  #else:
+	    #sep_hours = (24 - starttime[0] + curtime[0])*3600
+	  ## time offset from start in seconds
+	  #hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+	  #hittime = float( hittime )
+	  ##print 'starttime:', starttime, 'curtime', curtime
+	  ##print 'hit:',i
+	  ##print '\t', 'hitoffset, 1/100 sec count:', hittime1
+	  ##print '\t', 'hitclock:', hittime
+	  ##print '\t', 'difference:', hittime1 - hittime
+	  #print hittime1 - hittime
+	  #differences.append( hittime1 - hittime )
+          line = ClippedLine(ax, [ hittime1 ], [hity], color=hit_c , marker='o', markeredgewidth=2, markeredgecolor=hit_mec, picker=7.0)
 	  ax.add_line(line)
+
 
       
       # plot top, close examination subplot
@@ -474,8 +500,8 @@ class TCDAnalyze:
       ax2 = fig.add_subplot(312)
       self._w_ax2s.append(ax2)
       ax2.set_picker(True)
-      chan1_line2 = DecimatedClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
-      chan2_line2 = DecimatedClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
+      chan1_line2 = ClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
+      chan2_line2 = ClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       ax2.add_line(chan1_line2)
       ax2.add_line(chan2_line2)
       ax2.set_xlim( 0.0, 20.0 )
