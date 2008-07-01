@@ -365,7 +365,7 @@ class TCDAnalyze:
       close('all')
 
 
-  def plot_w_data(self, w_set=[], saveit=True, showit=False):
+  def plot_w_data(self, w_set=[], saveit=True, showit=False, use_centisec_clock=False):
     """Plot the 'w' file max velocity envelope data.
     
     *Parameters*:
@@ -377,6 +377,9 @@ class TCDAnalyze:
 
       showit:
 	whether or not to show the plot in a GUI on screen
+
+      use_centisec_clock:
+	whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
 
     """
     if w_set == []:
@@ -443,33 +446,28 @@ class TCDAnalyze:
 	   hity = chansmax/ 3.0
 	  else:
 	   hity = hity + hityinc
-      	
-	  hittime1 = float(i[0]) / sample_freq
+	  
+	  if use_centisec_clock:
+	    hittime = float(i[0]) / sample_freq
+	  else:
+      	  #### use the hr:min:sec recording
+	    #startime[0] = hour
+	    #starttime[1] = minute
+	    #starttime[2] = second
+            starttime = [ int(x) for x in metadata['start_time'].split(':') ]
+	    curtime = [ int(x) for x in i[2].split(':') ]
+      	    # deal with clock wrap around, assuming 
+      	    # the examine takes less than 24 hrs :P
+            if curtime[0] >=  starttime[0] :
+      	      sep_hours = (curtime[0]-starttime[0])*3600
+      	    else:
+      	      sep_hours = (24 - starttime[0] + curtime[0])*3600
+      	    # time offset from start in seconds
+      	    hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+      	    hittime = float( hittime )
 
-	  ##### use the hr:min:sec recording
-	  ## startime[0] = hour
-	  ## starttime[1] = minute
-	  ## starttime[2] = second
-	  #starttime = [ int(x) for x in metadata['start_time'].split(':') ]
-	  #curtime = [ int(x) for x in i[2].split(':') ]
-	  ## deal with clock wrap around, assuming 
-	  ## the examine takes less than 24 hrs :P
-	  #if curtime[0] >=  starttime[0] :
-	    #sep_hours = (curtime[0]-starttime[0])*3600
-	  #else:
-	    #sep_hours = (24 - starttime[0] + curtime[0])*3600
-	  ## time offset from start in seconds
-	  #hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
-	  #hittime = float( hittime )
-	  ##print 'starttime:', starttime, 'curtime', curtime
-	  ##print 'hit:',i
-	  ##print '\t', 'hitoffset, 1/100 sec count:', hittime1
-	  ##print '\t', 'hitclock:', hittime
-	  ##print '\t', 'difference:', hittime1 - hittime
-	  #print hittime1 - hittime
-	  #differences.append( hittime1 - hittime )
-          line = ClippedLine(ax, [ hittime1 ], [hity], color=hit_c , marker='o', markeredgewidth=2, markeredgecolor=hit_mec, picker=7.0)
-	  ax.add_line(line)
+          line = ClippedLine(ax, [ hittime ], [hity], color=hit_c , marker='o', markeredgewidth=2, markeredgecolor=hit_mec, picker=7.0)
+  	  ax.add_line(line)
 
 
       
