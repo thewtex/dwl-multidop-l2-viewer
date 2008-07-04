@@ -130,28 +130,28 @@ class TCDAnalyze:
 
   def __init__(self, filename_prefix):
     # argument checking
-    if (glob.glob(filename_prefix + '.TW[0-9]') == []) and (glob.glob(filename_prefix + '.TD[0-9]') == []) :
-	e = ExtensionError( filename_prefix, '.TW* or .TD*')
+    if (glob.glob(filename_prefix + '.tw[0-9]') == []) and (glob.glob(filename_prefix + '.td[0-9]') == []) :
+	e = ExtensionError( filename_prefix, '.tw* or .td*')
 	raise e
 
     ## [qualified] filename prefix, e.g. 'nla168'
     self._filename_prefix = filename_prefix
 
-    ## set containing #'s in filename_prefix + .TX#
+    ## set containing #'s in filename_prefix + .tx#
     self._x_set = set()
-    ## set containing #'s in filename_prefix + .TW#
+    ## set containing #'s in filename_prefix + .tw#
     self._w_set = set()
-    ## set containing #'s in filename_prefix + .TD#
+    ## set containing #'s in filename_prefix + .td#
     self._d_set = set()
 
-    prefixes = ['.TX', '.TW', '.TD']
+    prefixes = ['.tx', '.tw', '.td']
     for prefix in prefixes:
       for file in glob.glob(filename_prefix + prefix + '[0-9]'):
-	if prefix == '.TX':
+	if prefix == '.tx':
           self._x_set.add( file[ file.rindex( prefix )+3: ] )
-	elif prefix == '.TW':
+	elif prefix == '.tw':
           self._w_set.add( file[ file.rindex( prefix )+3: ] )
-	elif prefix == '.TD':
+	elif prefix == '.td':
           self._d_set.add( file[ file.rindex( prefix )+3: ] )
 	else:
 	  e = ExtensionError( 'unexpected, unknown extension, ' + prefix )
@@ -191,7 +191,7 @@ class TCDAnalyze:
     ## default metadata -- used if a '.TX#' file does not exist
     self._default_metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
 
-    ## metadata extracted from the '.TX*' files
+    ## metadata extracted from the '.tx*' files
     self._metadata = dict()
     for file in self._x_set:
       self._metadata[file] = __parse_metadata(self._filename_prefix + '.TX' + file)
@@ -207,7 +207,7 @@ class TCDAnalyze:
 
   
   def _read_w(self, w_set=[]):
-    """Read the 'filename_prefix.TW*' (doppler max velocity envelope) files.
+    """Read the 'filename_prefix.tw*' (doppler max velocity envelope) files.
 
     *Parameters*:
       w_set:
@@ -228,7 +228,7 @@ class TCDAnalyze:
 
 
     for file in w_set:
-      filename = self._filename_prefix + '.TW' + file 
+      filename = self._filename_prefix + '.tw' + file 
       f = open(filename, 'rb')
       f_size = os.path.getsize(filename)
       print 'Reading ', filename
@@ -293,21 +293,13 @@ class TCDAnalyze:
     fig = gcf()
     
     ax = fig.get_axes()
+    a = ax[0]
+    a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
 
-    ax_top = ax[0]
-    ax_mid = ax[1]
-
-    ax_picked = event.artist
-    
     for i in xrange( len(self._w_ax2s) ):
-      if ax_picked == self._w_ax2s[i]:
-	ax_top.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
+      if ax[1] == self._w_ax2s[i]:
 	rect = self._w_ax2rects[i]
 	rect.set_x( event.mouseevent.xdata - 2.5 )
-      elif ax_picked == self._w_ax3s[i]:
-	ax_mid.set_xlim( event.mouseevent.xdata - 50.0, event.mouseevent.xdata + 50.0 )
-	rect = self._w_ax3rects[i]
-	rect.set_x( event.mouseevent.xdata - 50.0 )
 
     draw()
 
@@ -410,8 +402,6 @@ class TCDAnalyze:
     ## middle subplot (scout plot) for velocity envelope figure
     #  views a shorter duration segment
     self._w_ax2s = []
-    ## indicator rectangles in self._w_ax3s
-    self._w_ax3rects = []
     ## indicator rectangles in self._w_ax2s
     self._w_ax2rects = []
     for file in w_set:
@@ -472,7 +462,7 @@ class TCDAnalyze:
 
       
       # plot top, close examination subplot
-      ax1 = fig.add_subplot(311)
+      ax1 = fig.add_subplot(211)
       ax1.set_ylim(chansmin, chansmax)
       chan1_line1 = ClippedLine(ax1, time, chan1, color='r', ls='-',  label='Channel 1', markersize=0 )
       chan2_line1 = ClippedLine(ax1, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
@@ -494,15 +484,15 @@ class TCDAnalyze:
       ylabel('Velocity [cm/s]')
       grid(b=True, color=(0.3, 0.3, 0.3))
 
-      # plot middle, medium zoom
-      ax2 = fig.add_subplot(312)
+      # plot bottom, general overview subplot
+      ax2 = fig.add_subplot(212)
       self._w_ax2s.append(ax2)
       ax2.set_picker(True)
       chan1_line2 = ClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
       chan2_line2 = ClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       ax2.add_line(chan1_line2)
       ax2.add_line(chan2_line2)
-      ax2.set_xlim( 0.0, 20.0 )
+      ax2.set_xlim( time.min(), time.max() )
       ax2.set_ylim( min([chan1.min(), chan2.min()]), max([chan1.max(), chan2.max()]) )
       # draw the hits
       plot_hits(ax2, hity, chansmax)
@@ -548,7 +538,7 @@ class TCDAnalyze:
 
   ## @warning this is incomplete, and possibly incorrect
   def _read_d(self,  d_set=[]):
-    """Read the 'filename_prefix.TD*' (doppler spectrum) files.
+    """Read the 'filename_prefix.td*' (doppler spectrum) files.
 
     *Parameters*:
       d_set:
@@ -575,7 +565,7 @@ class TCDAnalyze:
 
 
     for file in d_set:
-      filename = self._filename_prefix + '.TD' + file 
+      filename = self._filename_prefix + '.td' + file 
       f = open( filename, 'rb' )
       f_size = os.path.getsize(filename)
       print 'Reading ', filename
@@ -656,15 +646,15 @@ class TCDAnalyze:
 
   ## @warning this is incomplete, and may be incorrect
   def get_d_set(self):
-    """Return the set containing #'s in filename_prefix + .TD#."""
+    """Return the set containing #'s in filename_prefix + .td#."""
     return self._d_set
   
   def get_w_set(self):
-    """Return the set containing #'s in filename_prefix + .TW#."""
+    """Return the set containing #'s in filename_prefix + .tw#."""
     return self._w_set
 
   def get_metadata(self):
-    """Return metadata extracted from the '.TX*' files.
+    """Return metadata extracted from the '.tx*' files.
       
       metadata has the following dictionary keys:
 	patient_name:
@@ -728,13 +718,13 @@ if __name__ == "__main__":
 
 <fileprefix> is the filename prefix of the DWL Multidop L2 files.
 
-E.g., if you have 'nla168.TX0' and 'nla168.TW0'
+E.g., if you have 'nla168.tx0' and 'nla168.tw0'
 in the current directory <fileprefix> = 'nla168'"""
       parser = OptionParser(usage=usage)
 
       parser.add_option("-n", "--no-show", help="Do not display the generated plots on screen", dest="showit", action="store_false", default=True)
       parser.add_option("-s", "--save", help="Save the generated plots", dest="saveit", action="store_true", default=False)
-      parser.add_option("-t", "--trials", dest="trials", help="Comma separated list of the trials to process, e.g. if you had 'nla168.TX0', 'nla168.TX1', and 'nla168.TX2' and the corresponding '*.TW*' files in the current directory, you issue --trials=1,2 to process only the second and third trials.  Defaults to all trials.", default='[]' )
+      parser.add_option("-t", "--trials", dest="trials", help="Comma separated list of the trials to process, e.g. if you had 'nla168.tx0', 'nla168.tx1', and 'nla168.tx2' and the corresponding '*.tw*' files in the current directory, you issue --trials=1,2 to process only the second and third trials.  Defaults to all trials.", default='[]' )
 
       options, args = parser.parse_args()
 

@@ -5,7 +5,7 @@ Purpose:
 
 
 Dependencies:
-  You will also need python, wxpython, numpy, and matplotlib.  
+  You will also need python, numpy, and matplotlib.  
   See:
   http://python.org
   http://scipy.org
