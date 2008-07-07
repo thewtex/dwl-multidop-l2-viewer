@@ -126,13 +126,20 @@ class TCDAnalyze:
     
       * filename_prefix: [qualified] filename prefix, e.g. 'nla168'
       
+      * use_centisec_clock:
+	whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
+      
     """
 
-  def __init__(self, filename_prefix):
+  def __init__(self, filename_prefix, use_centisec_clock=False):
     # argument checking
     if (glob.glob(filename_prefix + '.TW[0-9]') == []) and (glob.glob(filename_prefix + '.TD[0-9]') == []) :
 	e = ExtensionError( filename_prefix, '.TW* or .TD*')
 	raise e
+
+
+    self.use_centisec_clock = use_centisec_clock
+
 
     ## [qualified] filename prefix, e.g. 'nla168'
     self._filename_prefix = filename_prefix
@@ -338,7 +345,24 @@ class TCDAnalyze:
     i = 0
     located = False
     while ( i < num_hits ) and (not located):
-      if float(metadata['hits'][i][0]) / sample_freq == chosen_x:
+      if self.use_centisec_clock:
+	  hittime= float(metadata['hits'][i][0]) / sample_freq
+      else:
+	  #startime[0] = hour
+	  #starttime[1] = minute
+	  #starttime[2] = second
+          starttime = [ int(x) for x in metadata['start_time'].split(':') ]
+	  curtime = [ int(x) for x in metadata['hits'][i][2].split(':') ]
+  	  # deal with clock wrap around, assuming 
+  	  # the examine takes less than 24 hrs :P
+	  if curtime[0] >=  starttime[0] :
+  	    sep_hours = (curtime[0]-starttime[0])*3600
+	  else:
+	    sep_hours = (24 - starttime[0] + curtime[0])*3600
+	  # time offset from start in seconds
+	  hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+	  hittime = float( hittime )
+      if hittime == chosen_x:
 	located = True
 	if event.mouseevent.button == 1:
 	  self._metadata[file]['hits'][i] = metadata['hits'][i][:3] + ('Affirmed',)
@@ -365,7 +389,7 @@ class TCDAnalyze:
       close('all')
 
 
-  def plot_w_data(self, w_set=[], saveit=True, showit=False, use_centisec_clock=False):
+  def plot_w_data(self, w_set=[], saveit=True, showit=False):
     """Plot the 'w' file max velocity envelope data.
     
     *Parameters*:
@@ -378,8 +402,6 @@ class TCDAnalyze:
       showit:
 	whether or not to show the plot in a GUI on screen
 
-      use_centisec_clock:
-	whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
 
     """
     if w_set == []:
@@ -434,20 +456,19 @@ class TCDAnalyze:
       hity = chansmax / 3.0
       hityinc = chansmax/11.0
 
+      # colors
+      hit_c=(0.6,0.6,1.0)
+      hit_mec='blue'
       def plot_hits(ax, hity, chansmax):
         """Plot hits as points on the given axis."""
-        # colors
-        hit_c=(0.9,0.9,1.0)
-        hit_mec='blue'
   
-	differences=[]
         for i in metadata['hits']:
 	  if hity > chansmax* 2.0/3.0:
 	   hity = chansmax/ 3.0
 	  else:
 	   hity = hity + hityinc
 	  
-	  if use_centisec_clock:
+	  if self.use_centisec_clock:
 	    hittime = float(i[0]) / sample_freq
 	  else:
       	  #### use the hr:min:sec recording
@@ -484,7 +505,27 @@ class TCDAnalyze:
 	  hity = chansmax/ 3.0
 	else:
 	  hity = hity + hityinc
-        text( float(i[0]) / sample_freq, hity+hityinc/2.0, i[1] + ' ' + i[2], color=(0.6, 0.6, 0.8),  horizontalalignment='center', fontsize=12 )
+	if self.use_centisec_clock:
+	  hittime= float(i[0]) / sample_freq
+	else:
+	  #startime[0] = hour
+	  #starttime[1] = minute
+	  #starttime[2] = second
+          starttime = [ int(x) for x in metadata['start_time'].split(':') ]
+	  curtime = [ int(x) for x in i[2].split(':') ]
+    	  # deal with clock wrap around, assuming 
+    	  # the examine takes less than 24 hrs :P
+          if curtime[0] >=  starttime[0] :
+    	      sep_hours = (curtime[0]-starttime[0])*3600
+    	  else:
+    	    sep_hours = (24 - starttime[0] + curtime[0])*3600
+    	  # time offset from start in seconds
+    	  hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+    	  hittime = float( hittime )
+	  arrow( hittime, hity, 1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=True, head_width=4.0, head_length=0.1 )
+	  arrow( hittime, hity, -1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=False, head_width=4.0, head_length=0.1 )
+
+	text( hittime, hity+hityinc/2.0, i[1] + ' ' + i[2], color=hit_c,  horizontalalignment='center', fontsize=12 )
       xlim( (0.0, 5.0) )
       l = legend( )
       lf = l.get_frame()
