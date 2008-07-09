@@ -288,6 +288,11 @@ class TCDAnalyze:
       from datetime import date
       today = date.today()
       f.write('Analyzed on ' + today.isoformat() + '\n')
+      if ( self._chan_1_tap == 0.0 ) and ( self._chan_2_tap == 0.0 ):
+	self._chan_1_tap = self._chan_1_tap_cache
+	self._chan_2_tap = self._chan_2_tap_cache
+      f.write('Channel 1 Time Average Peak Velocity (TAP) [cm/s],' + str(int(self._chan_1_tap)) + '\n')
+      f.write('Channel 2 Time Average Peak Velocity (TAP) [cm/s],' + str(int(self._chan_2_tap)) + '\n')
       asses_l = []
       for hit in metadata['hits']:
 	asses_l.append(hit[3])
@@ -327,8 +332,9 @@ class TCDAnalyze:
 	  rect = self._w_ax2rects[i]
 	  rect.set_x( xpic_start )
 	  # calculate TAP
-	  samp_freq = self._metadata[str(i)]['sample_freq']
-	  (chan1, chan2) = self._w_data[str(i)]
+	  keyname = self._metadata.keys()[i]
+	  samp_freq = self._metadata[keyname]['sample_freq']
+	  (chan1, chan2) = self._w_data[keyname]
 	  self._chan_1_tap_cache = mean( chan1[int(xpic_start*samp_freq) : int( (xpic_start+5.0)*samp_freq) ] )	
 	  self._chan_2_tap_cache = mean( chan2[int(xpic_start*samp_freq) : int( (xpic_start+5.0)*samp_freq) ] )	
 	  leg = ax_top.get_legend()
@@ -409,6 +415,9 @@ class TCDAnalyze:
     self._current_trial = fig.get_label()
     if event.artist.get_label() ==  'save':
       self._write_hits()
+    elif event.artist.get_label() == 'tap_save':
+      self._chan_1_tap = self._chan_1_tap_cache
+      self._chan_2_tap = self._chan_2_tap_cache
     else:
       close('all')
 
@@ -441,6 +450,7 @@ class TCDAnalyze:
     instructions='Instructions:\n--------------------\nData Navigation:\nbottom plot: all data\nmiddle plot: 100 sec selected from bottom\ntop plot: 5 sec selected from middle\nbuttons on bottom: saving and additional zooming\n----------\nHits Selection:\n left click to mark Affirm\n right click to mark Deny\n----------'
 
     figtext( 0.5, 0.3, instructions, figure=fig_info, va='bottom', ha='center', backgroundcolor='k', color='w', visible='True', fontsize=12.0, linespacing=1.8)
+    figtext( 0.5, 0.25, 'Click here to save\n the TAP (Time-Averaged Peak Velocity)\n from the top plot in the file', label='tap_save', linespacing=1.6, figure=fig_info, va='center', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
     figtext( 0.5, 0.15, 'Click here to save\n current plot\'s picks', label='save', linespacing=1.6, figure=fig_info, va='center', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
     figtext( 0.5, 0.05, 'Click here when finished', figure=fig_info, label='finish', va='top', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
 
