@@ -1,6 +1,6 @@
 from distutils.core import setup
 setup(name='tcd_analyze',
-      version='0.4.1',
+      version='0.5.0',
       description='For processing the transcranial doppler data generated on a DWL Multidop  L2.',
       long_description='See readme.txt',
       author='Matt McCormick',
