@@ -131,7 +131,7 @@ class TCDAnalyze:
       
     """
 
-  def __init__(self, filename_prefix, use_centisec_clock=False):
+  def __init__(self, filename_prefix, use_centisec_clock=True):
     # argument checking
     if (glob.glob(filename_prefix + '.TW[0-9]') == []) and (glob.glob(filename_prefix + '.TD[0-9]') == []) :
 	e = ExtensionError( filename_prefix, '.TW* or .TD*')
@@ -302,13 +302,20 @@ class TCDAnalyze:
     fig = gcf()
     
     ax = fig.get_axes()
-    a = ax[0]
-    a.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
+
+    ax_top = ax[0]
+    ax_mid = ax[1]
+    ax_picked = event.artist
 
     for i in xrange( len(self._w_ax2s) ):
-      if ax[1] == self._w_ax2s[i]:
-	rect = self._w_ax2rects[i]
-	rect.set_x( event.mouseevent.xdata - 2.5 )
+	if ax_picked == self._w_ax2s[i]:
+	  ax_top.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
+	  rect = self._w_ax2rects[i]
+	  rect.set_x( event.mouseevent.xdata - 2.5 )
+	elif ax_picked == self._w_ax3s[i]:
+	  ax_mid.set_xlim( event.mouseevent.xdata - 50.0, event.mouseevent.xdata + 50.0 )
+	  rect = self._w_ax3rects[i]
+	  rect.set_x( event.mouseevent.xdata - 50.0 )
 
     draw()
 
@@ -426,6 +433,8 @@ class TCDAnalyze:
     ## middle subplot (scout plot) for velocity envelope figure
     #  views a shorter duration segment
     self._w_ax2s = []
+    ## indicator rectangles in self._w_ax3s
+    self._w_ax3rects = []
     ## indicator rectangles in self._w_ax2s
     self._w_ax2rects = []
     for file in w_set:
@@ -523,7 +532,7 @@ class TCDAnalyze:
 
       
       # plot top, close examination subplot
-      ax1 = fig.add_subplot(211)
+      ax1 = fig.add_subplot(311)
       ax1.set_ylim(chansmin, chansmax)
       chan1_line1 = ClippedLine(ax1, time, chan1, color='r', ls='-',  label='Channel 1', markersize=0 )
       chan2_line1 = ClippedLine(ax1, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
@@ -536,7 +545,7 @@ class TCDAnalyze:
 	else:
 	  hity = hity + hityinc
 	#if self.use_centisec_clock:
-	  hittime2= float(i[0]) / sample_freq
+	  hittime= float(i[0]) / sample_freq
 	#else:
 	  #startime[0] = hour
 	  #starttime[1] = minute
@@ -551,11 +560,10 @@ class TCDAnalyze:
     	    sep_hours = (24 - starttime[0] + curtime[0])*3600
     	  # time offset from start in seconds
     	  hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
-    	  hittime1 = float( hittime )
+    	  hittime = float( hittime )
 	  # these don't work properly -- and extra arrows apparently randomly
 	  #arrow( hittime, hity, 1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=True, head_width=4.0, head_length=0.1 )
 	  #arrow( hittime, hity, -1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=False, head_width=4.0, head_length=0.1 )
-	print hittime2-hittime1
 
 	text( hittime, hity+hityinc/2.0, i[1] + ' ' + i[2], color=hit_c,  horizontalalignment='center', fontsize=12 )
       xlim( (0.0, 5.0) )
@@ -567,15 +575,15 @@ class TCDAnalyze:
       ylabel('Velocity [cm/s]')
       grid(b=True, color=(0.3, 0.3, 0.3))
 
-      # plot bottom, general overview subplot
-      ax2 = fig.add_subplot(212)
+      # plot middle, medium zoom
+      ax2 = fig.add_subplot(312)
       self._w_ax2s.append(ax2)
       ax2.set_picker(True)
       chan1_line2 = ClippedLine(ax2, time, chan1, color='r', ls='-',  markersize=0, label='Channel 1', antialiased=True )
       chan2_line2 = ClippedLine(ax2, time, chan2, color=(0.3, 1.0, 0.3), markersize=0, label='Channel 2', antialiased=True )
       ax2.add_line(chan1_line2)
       ax2.add_line(chan2_line2)
-      ax2.set_xlim( time.min(), time.max() )
+      ax2.set_xlim( 0.0, 20.0 )
       ax2.set_ylim( min([chan1.min(), chan2.min()]), max([chan1.max(), chan2.max()]) )
       # draw the hits
       plot_hits(ax2, hity, chansmax)
