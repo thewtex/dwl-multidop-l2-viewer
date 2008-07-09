@@ -9,5 +9,5 @@ setup(name='tcd_analyze',
       license='See legal.txt',
       py_modules=['tcd_analyze'],
       requires=['pylab', 'numpy'],
-      scripts=['tcd_analyze.py'],
+      scripts=['tcd_analyze.py', 'tcd_dialog.py'],
       )
