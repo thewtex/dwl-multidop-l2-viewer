@@ -138,6 +138,7 @@ class TCDAnalyze:
 	raise e
 
 
+    ##	whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
     self.use_centisec_clock = use_centisec_clock
 
 
@@ -150,6 +151,17 @@ class TCDAnalyze:
     self._w_set = set()
     ## set containing #'s in filename_prefix + .TD#
     self._d_set = set()
+
+    ## time average of the peak velocity TAP peak velocity for channel 1, this is the value saved to the results file
+    self._chan_1_tap = 0.0
+    ## time average of the peak velocity TAP peak velocity for channel 2, this is the value saved to the results file
+    self._chan_2_tap = 0.0
+    ## TAP displayed on the plot, value over the top scout plot
+    self._chan_1_tap_cache = 0.0
+    ## TAP displayed on the plot, value over the top scout plot
+    self._chan_2_tap_cache = 0.0
+
+    
 
     prefixes = ['.TX', '.TW', '.TD']
     for prefix in prefixes:
@@ -309,9 +321,20 @@ class TCDAnalyze:
 
     for i in xrange( len(self._w_ax2s) ):
 	if ax_picked == self._w_ax2s[i]:
-	  ax_top.set_xlim( event.mouseevent.xdata - 2.5, event.mouseevent.xdata + 2.5 )
+	  xpic_start = event.mouseevent.xdata - 2.5
+	  # readjust top scout window location
+	  ax_top.set_xlim( xpic_start, xpic_start + 5.0 )
 	  rect = self._w_ax2rects[i]
-	  rect.set_x( event.mouseevent.xdata - 2.5 )
+	  rect.set_x( xpic_start )
+	  # calculate TAP
+	  samp_freq = self._metadata[str(i)]['sample_freq']
+	  (chan1, chan2) = self._w_data[str(i)]
+	  self._chan_1_tap_cache = mean( chan1[int(xpic_start*samp_freq) : int( (xpic_start+5.0)*samp_freq) ] )	
+	  self._chan_2_tap_cache = mean( chan2[int(xpic_start*samp_freq) : int( (xpic_start+5.0)*samp_freq) ] )	
+	  leg = ax_top.get_legend()
+	  tex = leg.get_texts()
+	  tex[0].set_text( 'Channel 1, TAP = ' + str(int(self._chan_1_tap_cache)) + ' cm/s' )
+	  tex[1].set_text( 'Channel 2, TAP = ' + str(int(self._chan_2_tap_cache)) + ' cm/s' )
 	elif ax_picked == self._w_ax3s[i]:
 	  ax_mid.set_xlim( event.mouseevent.xdata - 50.0, event.mouseevent.xdata + 50.0 )
 	  rect = self._w_ax3rects[i]
@@ -544,9 +567,9 @@ class TCDAnalyze:
 	  hity = chansmax/ 3.0
 	else:
 	  hity = hity + hityinc
-	#if self.use_centisec_clock:
+	if self.use_centisec_clock:
 	  hittime= float(i[0]) / sample_freq
-	#else:
+	else:
 	  #startime[0] = hour
 	  #starttime[1] = minute
 	  #starttime[2] = second
