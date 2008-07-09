@@ -169,13 +169,15 @@ class TCDAnalyze:
     def __parse_metadata(metadata_file):
       f = open(metadata_file, 'r')
 
-      metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
+      metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[] }
       
       lines = f.readlines()
       for i in xrange(len(lines)):
 	lis = lines[i].split()
 	if lis[1] == 'HIT':
 	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3], 'Unchecked' ) ) 
+	if lis[1][:3] == 'MRK':
+	  metadata['marks'].append( (int(lis[0]), lis[1],  lis[2], lis[4] ) ) 
         elif ( lis[2] == 'NAME:' ):
 	  metadata['patient_name'] = lines[i][lines[i].rfind('NAME:')+6:-1]
         elif ( lis[2] == 'EXAM:' ):
@@ -196,7 +198,7 @@ class TCDAnalyze:
       return metadata
 
     ## default metadata -- used if a '.TX#' file does not exist
-    self._default_metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[]}
+    self._default_metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[]}
 
     ## metadata extracted from the '.TX*' files
     self._metadata = dict()
@@ -459,6 +461,9 @@ class TCDAnalyze:
       # colors
       hit_c=(0.6,0.6,1.0)
       hit_mec='blue'
+      mark1_c = (0.4, 0.4, 0.8)
+      mark2_c = (0.2, 0.8, 0.2)
+      markelse_c = (0.8,0.2,0.2)
       def plot_hits(ax, hity, chansmax):
         """Plot hits as points on the given axis."""
   
@@ -490,6 +495,41 @@ class TCDAnalyze:
           line = ClippedLine(ax, [ hittime ], [hity], color=hit_c , marker='o', markeredgewidth=2, markeredgecolor=hit_mec, picker=7.0)
   	  ax.add_line(line)
 
+	for i in metadata['marks']:
+	  if hity > chansmax* 2.0/3.0:
+	   hity = chansmax/ 3.0
+	  else:
+	   hity = hity + hityinc
+	  
+	  if self.use_centisec_clock:
+	    hittime = float(i[0]) / sample_freq
+	  else:
+      	  #### use the hr:min:sec recording
+	    #startime[0] = hour
+	    #starttime[1] = minute
+	    #starttime[2] = second
+            starttime = [ int(x) for x in metadata['start_time'].split(':') ]
+	    curtime = [ int(x) for x in i[2].split(':') ]
+      	    # deal with clock wrap around, assuming 
+      	    # the examine takes less than 24 hrs :P
+            if curtime[0] >=  starttime[0] :
+      	      sep_hours = (curtime[0]-starttime[0])*3600
+      	    else:
+      	      sep_hours = (24 - starttime[0] + curtime[0])*3600
+      	    # time offset from start in seconds
+      	    hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+      	    hittime = float( hittime )
+
+	  if i[3] == 'MARK1':
+	    mark_c = mark1_c
+	  elif i[3] == 'MARK2':
+	    mark_c = mark2_c
+	  else:
+	    mark_c = markelse_c
+	  text( hittime, hity, i[1] + ' ' + i[2], color=mark_c, axes=ax,  horizontalalignment='center', fontsize=12 )
+  	  ax.add_line(line)
+
+
 
       
       # plot top, close examination subplot
@@ -505,9 +545,9 @@ class TCDAnalyze:
 	  hity = chansmax/ 3.0
 	else:
 	  hity = hity + hityinc
-	if self.use_centisec_clock:
-	  hittime= float(i[0]) / sample_freq
-	else:
+	#if self.use_centisec_clock:
+	  hittime2= float(i[0]) / sample_freq
+	#else:
 	  #startime[0] = hour
 	  #starttime[1] = minute
 	  #starttime[2] = second
@@ -521,9 +561,11 @@ class TCDAnalyze:
     	    sep_hours = (24 - starttime[0] + curtime[0])*3600
     	  # time offset from start in seconds
     	  hittime = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
-    	  hittime = float( hittime )
-	  arrow( hittime, hity, 1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=True, head_width=4.0, head_length=0.1 )
-	  arrow( hittime, hity, -1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=False, head_width=4.0, head_length=0.1 )
+    	  hittime1 = float( hittime )
+	  # these don't work properly -- and extra arrows apparently randomly
+	  #arrow( hittime, hity, 1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=True, head_width=4.0, head_length=0.1 )
+	  #arrow( hittime, hity, -1.0, 0.0, alpha=0.6, facecolor=hit_c, edgecolor=hit_mec, width=1.0,  head_starts_at_zero=False, head_width=4.0, head_length=0.1 )
+	print hittime2-hittime1
 
 	text( hittime, hity+hityinc/2.0, i[1] + ' ' + i[2], color=hit_c,  horizontalalignment='center', fontsize=12 )
       xlim( (0.0, 5.0) )
