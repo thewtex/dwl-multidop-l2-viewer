@@ -31,18 +31,20 @@ class ClippedLine(Line2D):
 
     def set_data(self, *args, **kwargs):
         Line2D.set_data(self, *args, **kwargs)
+        if self._invalid:
+            self.recache()
 	## what is plotted pre-clipping
-        self._xorig = npy.array(self._x)
+        self.xorig = npy.array(self._x)
 	## what is plotted pre-clipping
-        self._yorig = npy.array(self._y)
+        self.yorig = npy.array(self._y)
 
     def draw(self, renderer):
         xlim = self.ax.get_xlim()
 
-        ind0 = npy.searchsorted(self._xorig, xlim[0], side='left')
-        ind1 = npy.searchsorted(self._xorig, xlim[1], side='right')
-        self._x = self._xorig[ind0:ind1]
-        self._y = self._yorig[ind0:ind1]
+        ind0 = npy.searchsorted(self.xorig, xlim[0], side='left')
+        ind1 = npy.searchsorted(self.xorig, xlim[1], side='right')
+        self._x = self.xorig[ind0:ind1]
+        self._y = self.yorig[ind0:ind1]
 
         Line2D.draw(self, renderer)
 
