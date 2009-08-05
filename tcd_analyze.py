@@ -72,6 +72,8 @@ class DecimatedClippedLine(Line2D):
 
   def set_data(self, *args, **kwargs):
     Line2D.set_data(self, *args, **kwargs)
+    if self._invalid:
+        self.recache()
     ## data preclipping and decimation
     self._xorig = npy.array(self._x)
     ## data pre clipping and decimation
@@ -80,7 +82,7 @@ class DecimatedClippedLine(Line2D):
 
   def draw(self, renderer):
     bb = self.ax.get_window_extent()
-    width = bb.width()
+    width = bb.width
 
     xlim = self.ax.get_xlim()
     ind0 = npy.searchsorted(self._xorig, xlim[0], side='left')
