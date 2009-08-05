@@ -5,8 +5,6 @@
 #   @author Matt McCormick (thewtex) <matt@mmmccormick.com>
 #   @date created 2008 March 15
 
-from pylab import *
-
 import os
 import glob
 
@@ -14,97 +12,6 @@ import scipy.signal
 import numpy as npy
 
 from optparse import OptionParser
-
-
-
-# adjusted from /usr/share/doc/matplotlib-0.91.2/examples/clippedline.py
-class ClippedLine(Line2D):
-    """
-    Clip the xlimits to the axes view limits -- this example assumes x is sorted
-    """
-
-    def __init__(self, ax, *args, **kwargs):
-        Line2D.__init__(self, *args, **kwargs)
-	## axes the line is plotted in
-        self.ax = ax
-
-
-    def set_data(self, *args, **kwargs):
-        Line2D.set_data(self, *args, **kwargs)
-        if self._invalid:
-            self.recache()
-	## what is plotted pre-clipping
-        self.xorig = npy.array(self._x)
-	## what is plotted pre-clipping
-        self.yorig = npy.array(self._y)
-
-    def draw(self, renderer):
-        xlim = self.ax.get_xlim()
-
-        ind0 = npy.searchsorted(self.xorig, xlim[0], side='left')
-        ind1 = npy.searchsorted(self.xorig, xlim[1], side='right')
-        self._x = self.xorig[ind0:ind1]
-        self._y = self.yorig[ind0:ind1]
-
-        Line2D.draw(self, renderer)
-
-
-
-class DecimatedClippedLine(Line2D):
-  """
-  Decimate and clip the data so it does not take as long to plot.  Assumes data is sorted and equally spaced.
-  """
-
-  def __init__(self, ax, *args, **kwargs):
-    """
-    *Parameters*:
-      ax:
-	axes the line is plotted on
-
-      *args, **kwargs:
-	Line2D args
-
-    """
-    Line2D.__init__(self, *args, **kwargs)
-    ## axes the line is plotted in
-    self.ax = ax
-
-
-  def set_data(self, *args, **kwargs):
-    Line2D.set_data(self, *args, **kwargs)
-    if self._invalid:
-        self.recache()
-    ## data preclipping and decimation
-    self._xorig = npy.array(self._x)
-    ## data pre clipping and decimation
-    self._yorig = npy.array(self._y)
-
-
-  def draw(self, renderer):
-    bb = self.ax.get_window_extent()
-    width = bb.width
-
-    xlim = self.ax.get_xlim()
-    ind0 = npy.searchsorted(self._xorig, xlim[0], side='left')
-    ind1 = npy.searchsorted(self._xorig, xlim[1], side='right')
-
-    self._x = self._xorig[ind0:ind1]
-    self._y = self._yorig[ind0:ind1]
-
-    if self.ax.get_autoscale_on():
-      ylim = self.ax.get_ylim()
-      self.ax.set_ylim( min([ylim[0], self._y.min()]), max([ylim[1], self._y.max()]) )
-
-    if width / float( ind1 - ind0 ) < 0.4: # if number of points to plot is much greater than the pixels in the plot
-      b, a = scipy.signal.butter(5, width / float( ind1 - ind0 ))
-      filty = scipy.signal.lfilter( b, a, self._y )
-
-      step = int( float( ind1 - ind0 ) / width )
-      self._x = self._x[::step]
-      self._y = filty[::step]
-
-    Line2D.draw(self, renderer)
-
 
 
 class ExtensionError(Exception):
@@ -116,8 +23,6 @@ class ExtensionError(Exception):
 
   def __str__(self):
     return 'the filename, %s, does not have the anticipated extension, %s' % (self.filename, self.extension)
-
-
 
 
 
@@ -837,31 +742,4 @@ class TCDAnalyze:
 
     
 	
-
-# if running as script
-if __name__ == "__main__":
-      import sys
-
-      usage = """usage: %prog [options] <fileprefix>
-
-<fileprefix> is the filename prefix of the DWL Multidop L2 files.
-
-E.g., if you have 'nla168.TX0' and 'nla168.TW0'
-in the current directory <fileprefix> = 'nla168'"""
-      parser = OptionParser(usage=usage)
-
-      parser.add_option("-n", "--no-show", help="Do not display the generated plots on screen", dest="showit", action="store_false", default=True)
-      parser.add_option("-s", "--save", help="Save the generated plots", dest="saveit", action="store_true", default=False)
-      parser.add_option("-t", "--trials", dest="trials", help="Comma separated list of the trials to process, e.g. if you had 'nla168.TX0', 'nla168.TX1', and 'nla168.TX2' and the corresponding '*.TW*' files in the current directory, you issue --trials=1,2 to process only the second and third trials.  Defaults to all trials.", default='[]' )
-
-      options, args = parser.parse_args()
-
-      t = TCDAnalyze(args[0])
-      trials = []
-      if options.trials != '[]':
-	for i in options.trials.split(','):
-	  trials.append(i)
-
-      t.plot_w_data(w_set=trials, showit=options.showit, saveit=options.saveit)
-
 
