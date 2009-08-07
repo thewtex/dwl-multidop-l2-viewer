@@ -14,18 +14,6 @@ import numpy as npy
 from optparse import OptionParser
 
 
-class ExtensionError(Exception):
-  """Exception raised if a file does not have the expected extension."""
-
-  def __init__(self, filename, extension):
-    self.filename = filename
-    self.extension = extension
-
-  def __str__(self):
-    return 'the filename, %s, does not have the anticipated extension, %s' % (self.filename, self.extension)
-
-
-
 class TCDAnalyze:
   """Process a trancranial doppler file.
 
@@ -40,18 +28,7 @@ class TCDAnalyze:
       
     """
 
-  def __init__(self, filename_prefix, use_centisec_clock=True):
-    # argument checking
-    if (glob.glob(filename_prefix + '.TW[0-9]') == []) and (glob.glob(filename_prefix + '.TD[0-9]') == []) :
-	e = ExtensionError( filename_prefix, '.TW* or .TD*')
-	raise e
-
-
-    ##	whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
-    self.use_centisec_clock = use_centisec_clock
-
-
-    ## [qualified] filename prefix, e.g. 'nla168'
+     ## [qualified] filename prefix, e.g. 'nla168'
     self._filename_prefix = filename_prefix
 
     ## set containing #'s in filename_prefix + .TX#
@@ -86,37 +63,6 @@ class TCDAnalyze:
 	  raise e
 	  
 
-
-    def __parse_metadata(metadata_file):
-      f = open(metadata_file, 'r')
-
-      metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[] }
-      
-      lines = f.readlines()
-      for i in xrange(len(lines)):
-	lis = lines[i].split()
-	if lis[1] == 'HIT':
-	  metadata['hits'].append( (int(lis[0]), lis[2], lis[3], 'Unchecked' ) ) 
-	if lis[1][:3] == 'MRK':
-	  metadata['marks'].append( (int(lis[0]), lis[1],  lis[2], lis[4] ) ) 
-        elif ( lis[2] == 'NAME:' ):
-	  metadata['patient_name'] = lines[i][lines[i].rfind('NAME:')+6:-1]
-        elif ( lis[2] == 'EXAM:' ):
-	  metadata['exam_date'] = lis[3]
-	elif ( lis[2] == 'PRF' ):	
-	  metadata['prf'] = int(lis[3])
-	elif ( lis[2] == 'SAMPLE_F' ):	
-	  metadata['sample_freq'] = int(lis[3])/10
-	elif ( lis[2] == 'FDOP1' ):	
-	  metadata['doppler_freq_1'] = int(lis[3])
-	elif ( lis[2] == 'FDOP2' ):	
-	  metadata['doppler_freq_2'] = int(lis[3])
-	elif lis[1] == 'START' :
-	  metadata['start_time'] = lis[2] 
-
-      f.close()
-
-      return metadata
 
     ## default metadata -- used if a '.TX#' file does not exist
     self._default_metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[]}
