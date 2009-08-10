@@ -4,11 +4,16 @@ import glob
 import os
 import sys
 
+from PyQt4 import QtGui, QtCore
+app = QtGui.QApplication(sys.argv)
+
 from dwl_multidop_exceptions import *
 from fileparsing.dwl_multidop_tx import TX
 
 def main(file_prefix):
-    filepath = os.path.abspath(file_prefix)
+    filepath = file_prefix
+    if not os.path.isabs(file_prefix):
+        filepath = os.path.abspath(file_prefix)
     tx_file = None
     tw_file = None
     if filepath[-2:] == '.t' or filepath[-2:] == '.T':
@@ -32,17 +37,15 @@ def main(file_prefix):
         tx_file = other_file
 
 
-    if not tw_file or not tx_file:
+    if not tw_file or not tx_file or tx_file[-1] == 't':
         e = ExtensionError(file_prefix, '.tx? and .tw? or .TX? and .TW?')
         raise e
         pass
-    else: # no arguments
-# bring up file open dialog
-        pass
-
 
     tx = TX(tx_file)
     print tx.metadata
+    sys.exit(app.exec_())
+
 
 
 if __name__ == '__main__':
@@ -60,7 +63,9 @@ if __name__ == '__main__':
     elif len(sys.argv) == 2:
         fileprefix = sys.argv[1]
     else:
-# bring up file open dialog...
-        pass
+        fileprefix = QtGui.QFileDialog.getOpenFileName(None, "Select *.TX0 or *.TW0 file.", 
+                os.getcwd(), 
+                ("DWL MultiDop L2 Files (*.TX? *.TW? *.tx? *.tw?)"))
+        fileprefix = str(fileprefix)
 
     main(fileprefix)
