@@ -4,9 +4,14 @@ class TX:
     Arguments:
         filepath:           path to the *.TX? file
         use_centisec_clock: whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
+
+    After initialization will have a 'metadata' member that is dictionary with
+    imaging parameters.
         """
 
     def __parse_metadata(self):
+        print 'Reading ', self._filepath
+
         f = open(self._filepath, 'r')
         metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[] }
       

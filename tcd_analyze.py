@@ -28,60 +28,6 @@ class TCDAnalyze:
       
     """
 
-     ## [qualified] filename prefix, e.g. 'nla168'
-    self._filename_prefix = filename_prefix
-
-    ## set containing #'s in filename_prefix + .TX#
-    self._x_set = set()
-    ## set containing #'s in filename_prefix + .TW#
-    self._w_set = set()
-    ## set containing #'s in filename_prefix + .TD#
-    self._d_set = set()
-
-    ## time average of the peak velocity TAP peak velocity for channel 1, this is the value saved to the results file
-    self._chan_1_tap = 0.0
-    ## time average of the peak velocity TAP peak velocity for channel 2, this is the value saved to the results file
-    self._chan_2_tap = 0.0
-    ## TAP displayed on the plot, value over the top scout plot
-    self._chan_1_tap_cache = 0.0
-    ## TAP displayed on the plot, value over the top scout plot
-    self._chan_2_tap_cache = 0.0
-
-    
-
-    prefixes = ['.TX', '.TW', '.TD']
-    for prefix in prefixes:
-      for file in glob.glob(filename_prefix + prefix + '[0-9]'):
-	if prefix == '.TX':
-          self._x_set.add( file[ file.rindex( prefix )+3: ] )
-	elif prefix == '.TW':
-          self._w_set.add( file[ file.rindex( prefix )+3: ] )
-	elif prefix == '.TD':
-          self._d_set.add( file[ file.rindex( prefix )+3: ] )
-	else:
-	  e = ExtensionError( 'unexpected, unknown extension, ' + prefix )
-	  raise e
-	  
-
-
-    ## default metadata -- used if a '.TX#' file does not exist
-    self._default_metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[]}
-
-    ## metadata extracted from the '.TX*' files
-    self._metadata = dict()
-    for file in self._x_set:
-      self._metadata[file] = __parse_metadata(self._filename_prefix + '.TX' + file)
-
-    ## default figure size
-    self._default_fig_size = (9,10)
-
-    ## current trial being processed
-    self._current_trial = '0'
-
-  
-
-
-  
   def _read_w(self, w_set=[]):
     """Read the 'filename_prefix.TW*' (doppler max velocity envelope) files.
 
@@ -90,43 +36,6 @@ class TCDAnalyze:
 	subset of the self._w_set to read, defaults to the entire set
 
 	"""
-
-    if w_set == []:
-      w_set = self._w_set
-
-    ## doppler data
-    self._w_data = dict()
-
-    samp_per_segment = 64
-    bytes_per_sample = 2
-    channels = 2
-    tcd_dtype= 'int16'
-
-
-    for file in w_set:
-      filename = self._filename_prefix + '.TW' + file 
-      f = open(filename, 'rb')
-      f_size = os.path.getsize(filename)
-      print 'Reading ', filename
-  
-      segments = f_size / ( samp_per_segment * bytes_per_sample * channels )
-  
-      chan1 = array([], dtype=tcd_dtype)
-      chan2 = array([], dtype=tcd_dtype)
-      data  = zeros((samp_per_segment), dtype=tcd_dtype)
-      for seg in xrange(segments):
-        data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
-        chan1 = concatenate((chan1, data.copy()) )
-        data = fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
-        chan2 = concatenate((chan2, data.copy()) )
-
-
-      chan1 = chan1.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/10**3
-      chan2 = chan2.astype(float) / 2.0**11 * self._default_metadata['prf']/2.0 *154000.0 / self._default_metadata['doppler_freq_1']/10**3
-      self._w_data[file] = (chan1, chan2)
-
-      f.close()
-  
   def _write_hits(self):
       file = self._current_trial
       if self._metadata.has_key(file):

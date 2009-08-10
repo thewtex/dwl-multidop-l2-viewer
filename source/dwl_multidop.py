@@ -9,6 +9,7 @@ app = QtGui.QApplication(sys.argv)
 
 from dwl_multidop_exceptions import *
 from fileparsing.dwl_multidop_tx import TX
+from fileparsing.dwl_multidop_tw import TW
 
 def main(file_prefix):
     filepath = file_prefix
@@ -44,6 +45,8 @@ def main(file_prefix):
 
     tx = TX(tx_file)
     print tx.metadata
+    tw = TW(tw_file, tx.metadata['prf'], tx.metadata['doppler_freq_1'],
+            tx.metadata['doppler_freq_2'])
     sys.exit(app.exec_())
 
 
