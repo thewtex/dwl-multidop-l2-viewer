@@ -11,27 +11,25 @@ def main(file_prefix):
     filepath = os.path.abspath(file_prefix)
     tx_file = None
     tw_file = None
-    if len(sys.argv) == 2:
-        if filepath[-2:] == '.t' or filepath[-2:] == '.T':
-            filepath = filepath[:-2]
+    if filepath[-2:] == '.t' or filepath[-2:] == '.T':
+        filepath = filepath[:-2]
         tx_file = glob.glob(filepath + '.[Tt][Xx][0-9]')
         tw_file = glob.glob(filepath + '.[Tt][Ww][0-9]')
         if len(tx_file) > 1:
             print "More than one file encounterd; please specify full path."
             sys.exit(1)
-    else:
-        if filepath[-4:-1] == '.tx' or filepath[-4:-1] == '.TX':
-            tx_file = filepath
-            other_file = filepath[:-1] + 'w' + filepath[-1:]
-            if not os.path.exists(other_file):
-                other_file = filepath[:-1] + 'W' + filepath[-1:]
-            tw_file = other_file
-        elif filepath[-4:-1] == '.tw' or filepath[-4:-1] == '.TW':
-            tw_file = filepath
-            other_file = filepath[:-1] + 'x' + filepath[-1:]
-            if not os.path.exists(other_file):
-                other_file = filepath[:-1] + 'X' + filepath[-1:]
-            tx_file = other_file
+    elif filepath[-4:-1] == '.tx' or filepath[-4:-1] == '.TX':
+        tx_file = filepath
+        other_file = filepath[:-1] + 'w' + filepath[-1:]
+        if not os.path.exists(other_file):
+            other_file = filepath[:-2] + 'W' + filepath[-1:]
+        tw_file = other_file
+    elif filepath[-4:-1] == '.tw' or filepath[-4:-1] == '.TW':
+        tw_file = filepath
+        other_file = filepath[:-1] + 'x' + filepath[-1:]
+        if not os.path.exists(other_file):
+            other_file = filepath[:-2] + 'X' + filepath[-1:]
+        tx_file = other_file
 
 
     if not tw_file or not tx_file:
@@ -55,9 +53,14 @@ if __name__ == '__main__':
     E.g., if you have 'nla168.TX0' and 'nla168.TW0'
     in the current directory <fileprefix> = 'nla168'"""
 
+    fileprefix = None
     if len(sys.argv) > 2:
         print usage
         sys.exit(1)
+    elif len(sys.argv) == 2:
+        fileprefix = sys.argv[1]
+    else:
+# bring up file open dialog...
+        pass
 
-
-    main(tx_file, tw_file)
+    main(fileprefix)
