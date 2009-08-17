@@ -12,11 +12,11 @@ class DWLMainWindowController():
         self.mw = DWLMainWindow()
         self.mw.show()
 
-        open = QtGui.QAction(QtGui.QIcon('icons/open.png'), '&Open...', self.mw)
-        open.setShortcut('Ctrl+O')
-        open.setStatusTip('Open different fileset')
-        self.mw.connect(open, QtCore.SIGNAL('triggered()'), self.open_file)
-        self.mw.file_menu.addAction(open)
+        open_action = QtGui.QAction(QtGui.QIcon('icons/open.png'), '&Open...', self.mw)
+        open_action.setShortcut('Ctrl+O')
+        open_action.setStatusTip('Open different fileset')
+        self.mw.connect(open_action, QtCore.SIGNAL('triggered()'), self.open_file)
+        self.mw.file_menu.addAction(open_action)
         self.mw.file_menu.addAction(self.mw.exit_action)
 
         self.load_file(file_prefix)

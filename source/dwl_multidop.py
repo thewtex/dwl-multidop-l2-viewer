@@ -4,6 +4,9 @@ import glob
 import os
 import sys
 
+from veusz.setting.settingdb import settingdb
+settingdb.readSettings()
+
 from PyQt4 import QtGui, QtCore
 app = QtGui.QApplication(sys.argv)
 
