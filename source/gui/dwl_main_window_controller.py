@@ -57,7 +57,7 @@ class DWLMainWindowController():
 
         self.tx = TX(tx_file, self.mw.loading_progress_bar)
 
-        self.mw.loading_label.setText('Loading velocity data from .Tw FILE...')
+        self.mw.loading_label.setText('Loading velocity data from .TW FILE...')
         self.tw = TW(tw_file, self.tx.metadata['prf'], self.tx.metadata['doppler_freq_1'],
                 self.tx.metadata['doppler_freq_2'], self.mw.loading_progress_bar)
         print self.tx.metadata
