@@ -12,6 +12,13 @@ class DWLMainWindowController():
         self.mw = DWLMainWindow()
         self.mw.show()
 
+        open = QtGui.QAction(QtGui.QIcon('icons/open.png'), '&Open...', self.mw)
+        open.setShortcut('Ctrl+O')
+        open.setStatusTip('Open different fileset')
+        self.mw.connect(open, QtCore.SIGNAL('triggered()'), self.open_file)
+        self.mw.file_menu.addAction(open)
+        self.mw.file_menu.addAction(self.mw.exit_action)
+
         self.load_file(file_prefix)
 
     def load_file(self, file_prefix):
@@ -67,4 +74,10 @@ class DWLMainWindowController():
         self.mw.statusBar().removeWidget(self.mw.loading_label)
         self.mw.statusBar().removeWidget(self.mw.loading_progress_bar)
 
+    def open_file(self):
+        fileprefix = QtGui.QFileDialog.getOpenFileName(None, "Select *.TX0 or *.TW0 file.", 
+                os.getcwd(), 
+                ("DWL MultiDop L2 Files (*.TX? *.TW? *.tx? *.tw?)"))
+        fileprefix = str(fileprefix)
+        self.load_file(fileprefix)
 

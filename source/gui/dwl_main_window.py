@@ -17,10 +17,9 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.loading_progress_bar = QtGui.QProgressBar(self.statusBar())
 
 # set up menu
-        exit = QtGui.QAction(QtGui.QIcon('icons/quit.png'), '&Quit', self)
-        exit.setShortcut('Ctrl+Q')
-        exit.setStatusTip('Exit application')
-        self.connect(exit, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
+        self.exit_action = QtGui.QAction(QtGui.QIcon('icons/exit.png'), '&Quit', self)
+        self.exit_action.setShortcut('Ctrl+Q')
+        self.exit_action.setStatusTip('Exit application')
+        self.connect(self.exit_action, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
         menubar = self.menuBar()
-        file = menubar.addMenu('&File')
-        file.addAction(exit)
+        self.file_menu = menubar.addMenu('&File')
