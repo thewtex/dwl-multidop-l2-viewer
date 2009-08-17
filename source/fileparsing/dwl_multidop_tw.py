@@ -23,10 +23,16 @@ class TW:
         tcd_dtype= 'int16'
         f_size = os.path.getsize(self._filepath)
         segments = f_size / ( samp_per_segment * bytes_per_sample * channels )
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(segments)
+        self._value = 0
+        self._progress_bar.setValue(self._value)
         chan1 = numpy.array([], dtype=tcd_dtype)
         chan2 = numpy.array([], dtype=tcd_dtype)
         data  = numpy.zeros((samp_per_segment), dtype=tcd_dtype)
         for seg in xrange(segments):
+            self._value = self._value + 1
+            self._progress_bar.setValue(self._value)
             data = numpy.fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
             chan1 = numpy.concatenate((chan1, data.copy()) )
             data = numpy.fromfile(f, dtype=tcd_dtype, count=samp_per_segment)
@@ -42,9 +48,11 @@ class TW:
 
         
 
-    def __init__(self, filepath, prf, doppler_freq_1, doppler_freq_2):
+    def __init__(self, filepath, prf, doppler_freq_1, doppler_freq_2,
+            progress_bar):
         self._filepath = filepath
         self._prf = float(prf)
         self._doppler_freq_1 = float(doppler_freq_1)
         self._doppler_freq_2 = float(doppler_freq_2)
+        self._progress_bar = progress_bar
         self.__parse_data()

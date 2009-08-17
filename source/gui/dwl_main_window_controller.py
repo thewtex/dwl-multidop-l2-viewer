@@ -1,5 +1,7 @@
 import os
 
+from PyQt4 import QtCore, QtGui
+
 from dwl_multidop_exceptions import *
 from fileparsing.dwl_multidop_tx import TX
 from fileparsing.dwl_multidop_tw import TW
@@ -46,12 +48,23 @@ class DWLMainWindowController():
 
         self.mw.setWindowTitle('DWL Multidop L2 Viewer - ' + tx_file)
 
-        self.tx = TX(tx_file)
+        self.mw.statusBar().clearMessage()
+        self.mw.statusBar().insertWidget(0, self.mw.loading_label)
+        self.mw.statusBar().insertWidget(1, self.mw.loading_progress_bar)
+        self.mw.loading_label.setText('Loading metadata .TX file...')
+        self.mw.loading_label.show()
+        self.mw.loading_progress_bar.show()
+
+        self.tx = TX(tx_file, self.mw.loading_progress_bar)
+
+        self.mw.loading_label.setText('Loading velocity data from .Tw FILE...')
         self.tw = TW(tw_file, self.tx.metadata['prf'], self.tx.metadata['doppler_freq_1'],
-                self.tx.metadata['doppler_freq_2'])
+                self.tx.metadata['doppler_freq_2'], self.mw.loading_progress_bar)
         print self.tx.metadata
         self.mw.current_subject_label.setText('Current Patient: ' +
                 self.tx.metadata['patient_name'])
 
+        self.mw.statusBar().removeWidget(self.mw.loading_label)
+        self.mw.statusBar().removeWidget(self.mw.loading_progress_bar)
 
 

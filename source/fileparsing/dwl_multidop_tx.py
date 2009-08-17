@@ -14,9 +14,15 @@ class TX:
 
         f = open(self._filepath, 'r')
         metadata = {'patient_name':'unknown patient', 'exam_date':'00-00-00', 'prf':6000, 'sample_freq':1000, 'doppler_freq_1':2000, 'doppler_freq_2':2000, 'start_time':'00:00:00', 'hits':[], 'marks':[] }
-      
+
         lines = f.readlines()
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(len(lines))
+        self._value = 0
+        self._progress_bar.setValue(self._value)
         for i in xrange(len(lines)):
+            self._value = self._value + 1
+            self._progress_bar.setValue(self._value)
             lis = lines[i].split()
             if lis[1] == 'HIT':
                 metadata['hits'].append( (int(lis[0]), lis[2], lis[3], 'Unchecked' ) ) 
@@ -41,7 +47,8 @@ class TX:
 
         self.metadata = metadata
 
-    def __init__(self, filepath, use_centisec_clock=True):
+    def __init__(self, filepath, progress_bar, use_centisec_clock=True):
         self._filepath = filepath
+        self._progress_bar = progress_bar
         self.__parse_metadata()
 
