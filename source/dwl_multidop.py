@@ -10,7 +10,7 @@ app = QtGui.QApplication(sys.argv)
 from dwl_multidop_exceptions import *
 from fileparsing.dwl_multidop_tx import TX
 from fileparsing.dwl_multidop_tw import TW
-from gui.dwl_main_window import DWLMainWindow
+from gui.dwl_main_window_controller import DWLMainWindowController
 
 def main(file_prefix):
     filepath = file_prefix
@@ -49,8 +49,8 @@ def main(file_prefix):
             tx.metadata['doppler_freq_2'])
     print tx.metadata
 
-    main_window = DWLMainWindow()
-    main_window.show()
+    main_window_controller = DWLMainWindowController(tx_file,
+            tx.metadata['patient_name'])
     sys.exit(app.exec_())
 
 
