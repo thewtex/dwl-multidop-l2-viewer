@@ -43,7 +43,7 @@ class TCDAnalyze:
       else:
 	metadata = self._default_metadata
       outfile = self._filename_prefix + '_' + file + '_' + metadata['patient_name'].replace(' ','_') + '_' + 'hits.csv' 
-      
+ 
       print 'Saving ', outfile
 
       f = open(outfile, 'w')
