@@ -10,10 +10,10 @@ settingdb.readSettings()
 from PyQt4 import QtGui, QtCore
 app = QtGui.QApplication(sys.argv)
 
-from gui.dwl_main_window_controller import DWLMainWindowController
+from gui.dwl_main_window import DWLMainWindow
 
 def main(file_prefix):
-    main_window_controller = DWLMainWindowController(file_prefix)
+    main_window = DWLMainWindow(file_prefix)
     sys.exit(app.exec_())
 
 
