@@ -27,19 +27,20 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.loading_progress_bar = QtGui.QProgressBar(self.statusBar())
 
 # set up menu
+        menubar = self.menuBar()
+        self.file_menu = menubar.addMenu('&File')
+
         self.exit_action = QtGui.QAction(QtGui.QIcon('icons/exit.png'), '&Quit', self)
         self.exit_action.setShortcut('Ctrl+Q')
         self.exit_action.setStatusTip('Exit application')
         self.connect(self.exit_action, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
-        menubar = self.menuBar()
-        self.file_menu = menubar.addMenu('&File')
+        self.file_menu.addAction(self.exit_action)
 
         open_action = QtGui.QAction(QtGui.QIcon('icons/open.png'), '&Open...', self)
         open_action.setShortcut('Ctrl+O')
         open_action.setStatusTip('Open different fileset')
         self.connect(open_action, QtCore.SIGNAL('triggered()'), self.open_file)
         self.file_menu.addAction(open_action)
-        self.file_menu.addAction(self.exit_action)
 
 # set up graph
         self.document = document.Document()

@@ -4,11 +4,13 @@ import glob
 import os
 import sys
 
-from veusz.setting.settingdb import settingdb
-settingdb.readSettings()
-
 from PyQt4 import QtGui, QtCore
-app = QtGui.QApplication(sys.argv)
+
+# stylesheet must be imported befor Application!
+import veusz.setting.stylesheet
+from veusz.application import Application
+app = Application(sys.argv)
+
 
 from gui.dwl_main_window import DWLMainWindow
 
