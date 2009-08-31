@@ -11,7 +11,6 @@ import veusz.setting.stylesheet
 from veusz.application import Application
 app = Application(sys.argv)
 
-
 from gui.dwl_main_window import DWLMainWindow
 
 def main(file_prefix):

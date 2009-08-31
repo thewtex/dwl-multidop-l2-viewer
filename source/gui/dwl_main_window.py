@@ -3,6 +3,8 @@ import sys
 
 from PyQt4 import QtCore, QtGui
 
+import numpy
+
 import veusz.windows.plotwindow 
 import veusz.document as document
 from veusz.document.commandinterface import CommandInterface
@@ -30,17 +32,19 @@ class DWLMainWindow(QtGui.QMainWindow):
         menubar = self.menuBar()
         self.file_menu = menubar.addMenu('&File')
 
+        open_action = QtGui.QAction(QtGui.QIcon('icons/open.png'), '&Open...', self)
+        open_action.setShortcut('Ctrl+O')
+        open_action.setStatusTip('Open different fileset')
+        self.connect(open_action, QtCore.SIGNAL('triggered()'), self.open_file)
+        self.file_menu.addAction(open_action)
+
         self.exit_action = QtGui.QAction(QtGui.QIcon('icons/exit.png'), '&Quit', self)
         self.exit_action.setShortcut('Ctrl+Q')
         self.exit_action.setStatusTip('Exit application')
         self.connect(self.exit_action, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
         self.file_menu.addAction(self.exit_action)
 
-        open_action = QtGui.QAction(QtGui.QIcon('icons/open.png'), '&Open...', self)
-        open_action.setShortcut('Ctrl+O')
-        open_action.setStatusTip('Open different fileset')
-        self.connect(open_action, QtCore.SIGNAL('triggered()'), self.open_file)
-        self.file_menu.addAction(open_action)
+        self.show()
 
 # set up graph
         self.document = document.Document()
@@ -48,15 +52,48 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.toolbar = self.plot.createToolbar(self, None)
         self.toolbar.show()
         self.setCentralWidget(self.plot)
-        self.i = CommandInterface(self.document)
-        self.i.To(self.i.Add('page'))
-        self.i.To(self.i.Add('graph'))
-        self.plot.slotViewZoomPage()
 
+        self.interface = CommandInterface(self.document)
+        i = self.interface
+        i.Set('width', u'20cm')
+        i.Set('height', u'27cm')
+        i.To(i.Add('page', name='page1'))
+        i.To(i.Add('grid', name='grid1'))
+        i.Set('rows', 3)
+        i.Set('columns', 1)
+        i.Set('leftMargin', u'0.2cm')
+        i.Set('bottomMargin', u'0.2cm')
 
-        self.show()
-
+# get initial velocity data
         self.load_file(file_prefix)
+
+# turn off anti-aliasing for speed
+        self.plot.actionAntialias()
+
+# top graph
+        i.To(i.Add('graph', name='topgraph', autoadd=False))
+        i.To(i.Add('axis', name='x', autoadd=False))
+        i.Set('min', 0.0)
+        i.Set('max', 5.0)
+        i.To('..')
+        i.To(i.Add('axis', name='y', autoadd=False))
+        i.Set('label', u'Velocity [\\emph{cm/s}]')
+        i.Set('direction', 'vertical')
+        i.To('..')
+        i.Add('xy', name='chan1', autoadd=False)
+        i.To('chan1')
+        i.Set('xData', u'time')
+        i.Set('yData', u'chan1_vel')
+        i.Set('PlotLine/color', u'green')
+        i.Set('marker', u'none')
+        i.To('..')
+        i.Add('xy', name='chan2', autoadd=False)
+        i.To('chan2')
+        i.Set('xData', u'time')
+        i.Set('yData', u'chan2_vel')
+        i.Set('PlotLine/color', u'orange')
+        i.Set('marker', u'none')
+
 
 
 ## 
@@ -114,12 +151,19 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.loading_label.setText('Loading velocity data from .TW FILE...')
         self.tw = TW(tw_file, self.tx.metadata['prf'], self.tx.metadata['doppler_freq_1'],
                 self.tx.metadata['doppler_freq_2'], self.loading_progress_bar)
-        print self.tx.metadata
         self.current_subject_label.setText('Current Patient: ' +
                 self.tx.metadata['patient_name'])
 
         self.statusBar().removeWidget(self.loading_label)
         self.statusBar().removeWidget(self.loading_progress_bar)
+
+        i = self.interface
+        i.SetData('chan1_vel', self.tw.chan1)
+        i.SetData('chan2_vel', self.tw.chan2)
+        sample_freq = float(self.tx.metadata['sample_freq'])
+        time = numpy.arange(len(self.tw.chan1)) / sample_freq
+        i.SetData('time', time)
+
 
 ## 
 # @brief bring up a file open dialog and load in the requestd data set
