@@ -5,6 +5,7 @@ from PyQt4 import QtCore, QtGui
 
 import numpy
 
+import veusz.setting
 import veusz.windows.plotwindow 
 import veusz.document as document
 from veusz.document.commandinterface import CommandInterface
@@ -15,6 +16,7 @@ from fileparsing.dwl_multidop_tw import TW
 from gui.ui_dwl_main_window import Ui_DWLMainWindow
 
 class DWLMainWindow(QtGui.QMainWindow):
+
     def __init__(self, file_prefix):
         QtGui.QMainWindow.__init__(self)
 
@@ -53,6 +55,9 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.toolbar.show()
         self.setCentralWidget(self.plot)
 
+# turn off anti-aliasing for speed
+        veusz.setting.settingdb['plot_antialias'] = False
+
         self.interface = CommandInterface(self.document)
         i = self.interface
         i.Set('width', u'20cm')
@@ -67,8 +72,6 @@ class DWLMainWindow(QtGui.QMainWindow):
 # get initial velocity data
         self.load_file(file_prefix)
 
-# turn off anti-aliasing for speed
-        self.plot.actionAntialias()
 
 # @todo find out if this color scheme mimic the machine
         chan1color = u'green'
@@ -87,6 +90,7 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('label', u'Velocity [\\emph{cm/s}]')
             i.Set('direction', 'vertical')
             i.To('..')
+
             i.Add('xy', name='chan1', autoadd=False)
             i.To('chan1')
             i.Set('xData', u'time')
@@ -94,12 +98,21 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('PlotLine/color', chan1color)
             i.Set('marker', u'none')
             i.To('..')
+
             i.Add('xy', name='chan2', autoadd=False)
             i.To('chan2')
             i.Set('xData', u'time')
             i.Set('yData', u'chan2_vel')
             i.Set('PlotLine/color', chan2color)
             i.Set('marker', u'none')
+
+            i.To('..')
+            i.Add('xy', name='hits', autoadd=False)
+            i.To('hits')
+            i.Set('xData', u'hit_times')
+            i.Set('yData', u'hit_ys')
+            i.Set('PlotLine/hide', True)
+            i.Set('MarkerFill/color', u'grey')
 
         add_graph('topgraph', 0.0, 5.0)
         add_graph('middlegraph', 0.0, 20.0)
@@ -169,12 +182,58 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.statusBar().removeWidget(self.loading_label)
         self.statusBar().removeWidget(self.loading_progress_bar)
 
+# import velocity data into plot
         i = self.interface
         i.SetData('chan1_vel', self.tw.chan1)
         i.SetData('chan2_vel', self.tw.chan2)
         sample_freq = float(self.tx.metadata['sample_freq'])
         time = numpy.arange(len(self.tw.chan1)) / sample_freq
         i.SetData('time', time)
+
+# import hits data into plot
+#        use_centisec_clock: whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
+        use_centisec_clock = True
+# we stagger the Y location of the hits so that they do not overlap
+        chansmax = max([self.tw.chan1.max(), self.tw.chan2.max()])
+        chansmin = min([self.tw.chan1.min(), self.tw.chan2.min()])
+        hit_y_min = chansmax / 3.0
+        hit_y_inc = chansmax / 11.0
+        hit_y = hit_y_min
+        hit_time = 0.0
+        hit_ys = numpy.zeros(len(self.tx.metadata['hits']))
+        hit_times = numpy.zeros(len(self.tx.metadata['hits']))
+        count = 0
+        for hit in self.tx.metadata['hits']:
+            if hit_y > chansmax* 2.0/3.0:
+                hit_y = hit_y_min
+            else:
+                hit_y += hit_y_inc
+            if use_centisec_clock:
+                hit_time = float(hit[0]) / 100.0
+            else:
+      	    #### use the hr:min:sec recording
+	            #startime[0] = hour
+	            #starttime[1] = minute
+	            #starttime[2] = second
+                starttime = [ int(x) for x in metadata['start_time'].split(':') ]
+                curtime = [ int(x) for x in hit[2].split(':') ]
+                # deal with clock wrap around, assuming 
+                # the examine takes less than 24 hrs :P
+                if curtime[0] >=  starttime[0] :
+                  sep_hours = (curtime[0]-starttime[0])*3600
+                else:
+                  sep_hours = (24 - starttime[0] + curtime[0])*3600
+                # time offset from start in seconds
+                hit_time = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+                hit_time = float(hittime)
+
+            hit_times[count] = hit_time
+            hit_ys[count] = hit_y
+            count += 1
+        i.SetData('hit_times', hit_times)
+        i.SetData('hit_ys', hit_ys)
+                
+        
 
 
 ## 

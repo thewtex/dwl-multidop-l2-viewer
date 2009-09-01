@@ -44,53 +44,7 @@ class TCDAnalyze:
 
 
     """
-    if w_set == []:
-      w_set = self._w_set
 
-      
-    self._read_w(w_set)
-
-
-    # informational window
-    fig_info = figure(10, figsize=(4.3,5.4), facecolor=(0.2,0.2,0.2))
-
-    instructions='Instructions:\n--------------------\nData Navigation:\nbottom plot: all data\nmiddle plot: 100 sec selected from bottom\ntop plot: 5 sec selected from middle\nbuttons on bottom: saving and additional zooming\n----------\nHits Selection:\n left click to mark Affirm\n right click to mark Deny\n----------'
-
-    figtext( 0.5, 0.3, instructions, figure=fig_info, va='bottom', ha='center', backgroundcolor='k', color='w', visible='True', fontsize=12.0, linespacing=1.8)
-    figtext( 0.5, 0.25, 'Click here to save\n the TAP (Time-Averaged Peak Velocity)\n from the top plot in the file', label='tap_save', linespacing=1.6, figure=fig_info, va='center', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
-    figtext( 0.5, 0.15, 'Click here to save\n current plot\'s picks', label='save', linespacing=1.6, figure=fig_info, va='center', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
-    figtext( 0.5, 0.05, 'Click here when finished', figure=fig_info, label='finish', va='top', ha='center', backgroundcolor=(0.1,0.1,0.2), color='w', alpha=0.8, visible='True', picker=True, fontsize=14.0)
-
-    fig_info.canvas.mpl_connect('pick_event',self._save_or_close)
-
-
-
-
-
-    ## bottom subplot (scout plot) for velocity envelope figure
-    #  views the entire signal
-    self._w_ax3s = []
-    ## middle subplot (scout plot) for velocity envelope figure
-    #  views a shorter duration segment
-    self._w_ax2s = []
-    ## indicator rectangles in self._w_ax3s
-    self._w_ax3rects = []
-    ## indicator rectangles in self._w_ax2s
-    self._w_ax2rects = []
-    for file in w_set:
-      print 'Plotting ', self._filename_prefix + '.TW' + file
-      self._current_trial = file
-      if self._metadata.has_key(file):
-	metadata = self._metadata[file]
-      else:
-	metadata = self._default_metadata
-
-      (chan1, chan2) = self._w_data[file]
-      sample_freq = float( metadata['sample_freq'])
-      time = arange( len(chan1) ) / sample_freq
-
-      fig = figure(int(file), figsize=self._default_fig_size)
-      fig.set_label(file)
 
       chansmax = max([chan1.max(), chan2.max()]) 
       chansmin = min([chan1.min(), chan2.min()])

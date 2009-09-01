@@ -3,10 +3,29 @@ class TX:
 
     Arguments:
         filepath:           path to the *.TX? file
-        use_centisec_clock: whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
 
     After initialization will have a 'metadata' member that is dictionary with
     imaging parameters.
+      metadata has the following dictionary keys:
+	patient_name:
+	  
+	prf:
+	  pulse repetition frequency [Hz]
+	  
+	sample_freq:
+	  velocity curve sampling frequency [Hz]
+	  
+	doppler_freq_1:
+	  excitation frequency of channel 1 [kHz]
+	  
+	doppler_freq_2:
+	  excitation frequency of channel 2 [kHz]
+
+	start_time:
+	  clock time of acquisition start
+
+	hits:
+	  list with the detected hits.  Each entry is a tuple with the sample point, hit dB, and hit time
         """
 
     def __parse_metadata(self):
@@ -47,7 +66,7 @@ class TX:
 
         self.metadata = metadata
 
-    def __init__(self, filepath, progress_bar, use_centisec_clock=True):
+    def __init__(self, filepath, progress_bar):
         self._filepath = filepath
         self._progress_bar = progress_bar
         self.__parse_metadata()
