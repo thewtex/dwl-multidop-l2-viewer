@@ -70,29 +70,41 @@ class DWLMainWindow(QtGui.QMainWindow):
 # turn off anti-aliasing for speed
         self.plot.actionAntialias()
 
-# top graph
-        i.To(i.Add('graph', name='topgraph', autoadd=False))
-        i.To(i.Add('axis', name='x', autoadd=False))
-        i.Set('min', 0.0)
-        i.Set('max', 5.0)
-        i.To('..')
-        i.To(i.Add('axis', name='y', autoadd=False))
-        i.Set('label', u'Velocity [\\emph{cm/s}]')
-        i.Set('direction', 'vertical')
-        i.To('..')
-        i.Add('xy', name='chan1', autoadd=False)
-        i.To('chan1')
-        i.Set('xData', u'time')
-        i.Set('yData', u'chan1_vel')
-        i.Set('PlotLine/color', u'green')
-        i.Set('marker', u'none')
-        i.To('..')
-        i.Add('xy', name='chan2', autoadd=False)
-        i.To('chan2')
-        i.Set('xData', u'time')
-        i.Set('yData', u'chan2_vel')
-        i.Set('PlotLine/color', u'orange')
-        i.Set('marker', u'none')
+# @todo find out if this color scheme mimic the machine
+        chan1color = u'green'
+        chan2color = u'orange'
+
+# add the graphs
+        def add_graph(graphname, xmin, xmax):
+            i.To('/page1/grid1')
+            i.To(i.Add('graph', name=graphname, autoadd=False))
+            i.To(i.Add('axis', name='x', autoadd=False))
+            i.Set('min', xmin)
+            if xmax > 0.0:
+                i.Set('max', xmax)
+            i.To('..')
+            i.To(i.Add('axis', name='y', autoadd=False))
+            i.Set('label', u'Velocity [\\emph{cm/s}]')
+            i.Set('direction', 'vertical')
+            i.To('..')
+            i.Add('xy', name='chan1', autoadd=False)
+            i.To('chan1')
+            i.Set('xData', u'time')
+            i.Set('yData', u'chan1_vel')
+            i.Set('PlotLine/color', chan1color)
+            i.Set('marker', u'none')
+            i.To('..')
+            i.Add('xy', name='chan2', autoadd=False)
+            i.To('chan2')
+            i.Set('xData', u'time')
+            i.Set('yData', u'chan2_vel')
+            i.Set('PlotLine/color', chan2color)
+            i.Set('marker', u'none')
+
+        add_graph('topgraph', 0.0, 5.0)
+        add_graph('middlegraph', 0.0, 20.0)
+        add_graph('bottomgraph', 0.0, -1)
+        
 
 
 
