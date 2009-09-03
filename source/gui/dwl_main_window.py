@@ -83,6 +83,7 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.To(i.Add('graph', name=graphname, autoadd=False))
             i.To(i.Add('axis', name='x', autoadd=False))
             i.Set('min', xmin)
+# bottom plot shows all
             if xmax > 0.0:
                 i.Set('max', xmax)
             i.To('..')
@@ -118,6 +119,14 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('Label/posnVert', u'top')
 
         add_graph('topgraph', 0.0, 5.0)
+        i.To('/page1/grid1/topgraph/x')
+        i.Set('GridLines/style', u'dotted-fine')
+        i.Set('GridLines/hide', False)
+        i.Set('GridLines/width', '0.75pt')
+        i.To('../y')
+        i.Set('GridLines/style', u'dotted-fine')
+        i.Set('GridLines/hide', False)
+        i.Set('GridLines/width', '0.7pt')
         add_graph('middlegraph', 0.0, 20.0)
         add_graph('bottomgraph', 0.0, -1)
         
