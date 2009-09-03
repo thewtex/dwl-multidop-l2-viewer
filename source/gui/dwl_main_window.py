@@ -113,6 +113,9 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('yData', u'hit_ys')
             i.Set('PlotLine/hide', True)
             i.Set('MarkerFill/color', u'grey')
+            i.Set('labels', u'hit_labels')
+            i.Set('Label/posnHorz', u'centre')
+            i.Set('Label/posnVert', u'top')
 
         add_graph('topgraph', 0.0, 5.0)
         add_graph('middlegraph', 0.0, 20.0)
@@ -197,14 +200,15 @@ class DWLMainWindow(QtGui.QMainWindow):
         chansmax = max([self.tw.chan1.max(), self.tw.chan2.max()])
         chansmin = min([self.tw.chan1.min(), self.tw.chan2.min()])
         hit_y_min = chansmax / 3.0
-        hit_y_inc = chansmax / 11.0
+        hit_y_inc = chansmax / 8.0
         hit_y = hit_y_min
         hit_time = 0.0
         hit_ys = numpy.zeros(len(self.tx.metadata['hits']))
         hit_times = numpy.zeros(len(self.tx.metadata['hits']))
+        hit_labels = []
         count = 0
         for hit in self.tx.metadata['hits']:
-            if hit_y > chansmax* 2.0/3.0:
+            if hit_y > chansmax* 3.0/4.0:
                 hit_y = hit_y_min
             else:
                 hit_y += hit_y_inc
@@ -230,8 +234,12 @@ class DWLMainWindow(QtGui.QMainWindow):
             hit_times[count] = hit_time
             hit_ys[count] = hit_y
             count += 1
-        i.SetData('hit_times', hit_times)
-        i.SetData('hit_ys', hit_ys)
+            hit_labels.append(hit[1] + ' ' + hit[2])
+
+
+        i.SetData(u'hit_times', hit_times)
+        i.SetData(u'hit_ys', hit_ys)
+        i.SetDataText(u'hit_labels', hit_labels)
                 
         
 
