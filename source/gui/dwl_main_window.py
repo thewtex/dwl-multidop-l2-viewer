@@ -202,34 +202,46 @@ class DWLMainWindow(QtGui.QMainWindow):
         time = numpy.arange(len(self.tw.chan1)) / sample_freq
         i.SetData('time', time)
 
-# import hits data into plot
-#        use_centisec_clock: whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
+# import hits data and marks into plot
+
+
+        hit_times, hit_ys, hit_labels = self._place_events(self.tx.metadata['hits'])
+        i.SetData(u'hit_times', hit_times)
+        i.SetData(u'hit_ys', hit_ys)
+        i.SetDataText(u'hit_labels', hit_labels)
+        
+
+    def _place_events(self, events):
+        """take mark and hit events and determine their location on the
+        plot"""
+#           use_centisec_clock: whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
         use_centisec_clock = True
+
 # we stagger the Y location of the hits so that they do not overlap
         chansmax = max([self.tw.chan1.max(), self.tw.chan2.max()])
         chansmin = min([self.tw.chan1.min(), self.tw.chan2.min()])
-        hit_y_min = chansmax / 3.0
-        hit_y_inc = chansmax / 8.0
-        hit_y = hit_y_min
-        hit_time = 0.0
-        hit_ys = numpy.zeros(len(self.tx.metadata['hits']))
-        hit_times = numpy.zeros(len(self.tx.metadata['hits']))
-        hit_labels = []
+        event_y_min = chansmax / 3.0
+        event_y_inc = chansmax / 8.0
+        event_y = event_y_min
+        event_time = 0.0
+        event_ys = numpy.zeros(len(events))
+        event_times = numpy.zeros(len(events))
+        event_labels = []
         count = 0
-        for hit in self.tx.metadata['hits']:
-            if hit_y > chansmax* 3.0/4.0:
-                hit_y = hit_y_min
+        for event in events:
+            if event_y > chansmax* 3.0/4.0:
+                event_y = event_y_min
             else:
-                hit_y += hit_y_inc
+                event_y += event_y_inc
             if use_centisec_clock:
-                hit_time = float(hit[0]) / 100.0
+                event_time = float(event[0]) / 100.0
             else:
-      	    #### use the hr:min:sec recording
-	            #startime[0] = hour
-	            #starttime[1] = minute
-	            #starttime[2] = second
+            #### use the hr:min:sec recording
+                #startime[0] = hour
+                #starttime[1] = minute
+                #starttime[2] = second
                 starttime = [ int(x) for x in metadata['start_time'].split(':') ]
-                curtime = [ int(x) for x in hit[2].split(':') ]
+                curtime = [ int(x) for x in event[2].split(':') ]
                 # deal with clock wrap around, assuming 
                 # the examine takes less than 24 hrs :P
                 if curtime[0] >=  starttime[0] :
@@ -237,21 +249,14 @@ class DWLMainWindow(QtGui.QMainWindow):
                 else:
                   sep_hours = (24 - starttime[0] + curtime[0])*3600
                 # time offset from start in seconds
-                hit_time = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
-                hit_time = float(hittime)
+                event_time = sep_hours + (curtime[1] - starttime[1])*60 + (curtime[2] - starttime[2])
+                event_time = float(eventtime)
 
-            hit_times[count] = hit_time
-            hit_ys[count] = hit_y
+            event_times[count] = event_time
+            event_ys[count] = event_y
             count += 1
-            hit_labels.append(hit[1] + ' ' + hit[2])
-
-
-        i.SetData(u'hit_times', hit_times)
-        i.SetData(u'hit_ys', hit_ys)
-        i.SetDataText(u'hit_labels', hit_labels)
-                
-        
-
+            event_labels.append(event[1] + ' ' + event[2])
+        return (event_times, event_ys, event_labels)
 
 ## 
 # @brief bring up a file open dialog and load in the requestd data set
