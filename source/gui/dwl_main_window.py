@@ -92,6 +92,7 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('direction', 'vertical')
             i.To('..')
 
+# plot channel 1
             i.Add('xy', name='chan1', autoadd=False)
             i.To('chan1')
             i.Set('xData', u'time')
@@ -100,6 +101,7 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('marker', u'none')
             i.To('..')
 
+# plot channel 2
             i.Add('xy', name='chan2', autoadd=False)
             i.To('chan2')
             i.Set('xData', u'time')
@@ -107,6 +109,7 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('PlotLine/color', chan2color)
             i.Set('marker', u'none')
 
+# plot hits
             i.To('..')
             i.Add('xy', name='hits', autoadd=False)
             i.To('hits')
@@ -114,9 +117,33 @@ class DWLMainWindow(QtGui.QMainWindow):
             i.Set('yData', u'hit_ys')
             i.Set('PlotLine/hide', True)
             i.Set('MarkerFill/color', u'grey')
+            i.Set('Label/color', u'grey')
             i.Set('labels', u'hit_labels')
             i.Set('Label/posnHorz', u'centre')
             i.Set('Label/posnVert', u'top')
+
+# plot marks
+            mark_colors = {'MRK1': u'red',
+                    'MRK2': u'blue',
+                    'MRK3': u'cyan',
+                    'MRK4': u'magenta',
+                    'MRK5': u'darkcyan',
+                    'MRK6': u'darkmagenta' }
+            i.To('..')
+            dataset_prefixes = set([dataset[:4] for dataset in i.GetDatasets()])
+            for p in dataset_prefixes:
+                if p[:3] == 'MRK':
+                    i.Add('xy', name=p, autoadd=False)
+                    i.To(p)
+                    i.Set('xData', p + '_times')
+                    i.Set('yData', p + '_ys')
+                    i.Set('PlotLine/hide', True)
+                    i.Set('MarkerFill/color', mark_colors[p])
+                    i.Set('Label/color', mark_colors[p])
+                    i.Set('labels', p + '_labels')
+                    i.Set('Label/posnHorz', u'centre')
+                    i.Set('Label/posnVert', u'top')
+                    i.To('..')
 
         add_graph('topgraph', 0.0, 5.0)
         i.To('/page1/grid1/topgraph/x')
@@ -202,26 +229,36 @@ class DWLMainWindow(QtGui.QMainWindow):
         time = numpy.arange(len(self.tw.chan1)) / sample_freq
         i.SetData('time', time)
 
+        chandel = max([self.tw.chan1.max(), self.tw.chan2.max()]) - min([self.tw.chan1.min(), self.tw.chan2.min()])
+
 # import hits data and marks into plot
-
-
-        hit_times, hit_ys, hit_labels = self._place_events(self.tx.metadata['hits'])
+        hit_times, hit_ys, hit_labels = self._place_events(self.tx.metadata['hits'], chandel*0.1, chandel*0.8)
         i.SetData(u'hit_times', hit_times)
         i.SetData(u'hit_ys', hit_ys)
         i.SetDataText(u'hit_labels', hit_labels)
+
+        marks = dict()
+        for mark in self.tx.metadata['marks']:
+            if mark[1] not in marks:
+                marks[mark[1]] = [mark]
+            else:
+                marks[mark[1]].append(mark)
+        for markkey, markval in marks.iteritems():
+            mark_times, mark_ys, mark_labels = self._place_events(markval,
+                    chandel*0.1+0.05*chandel, chandel*0.8)
+            i.SetData(markkey + '_times', mark_times)
+            i.SetData(markkey + '_ys', mark_ys)
+            i.SetDataText(markkey + '_labels', mark_labels)
         
 
-    def _place_events(self, events):
+    def _place_events(self, events, event_y_min, event_y_max):
         """take mark and hit events and determine their location on the
         plot"""
 #           use_centisec_clock: whether to use the 1/100 sec clock recordings from the hits data file, or the hr:min:sec, values instead.  On our machine, we found that the there was a large discrepency as for long time period recordings
         use_centisec_clock = True
 
 # we stagger the Y location of the hits so that they do not overlap
-        chansmax = max([self.tw.chan1.max(), self.tw.chan2.max()])
-        chansmin = min([self.tw.chan1.min(), self.tw.chan2.min()])
-        event_y_min = chansmax / 3.0
-        event_y_inc = chansmax / 8.0
+        event_y_inc = (event_y_max - event_y_min) / 6.0
         event_y = event_y_min
         event_time = 0.0
         event_ys = numpy.zeros(len(events))
@@ -229,7 +266,7 @@ class DWLMainWindow(QtGui.QMainWindow):
         event_labels = []
         count = 0
         for event in events:
-            if event_y > chansmax* 3.0/4.0:
+            if event_y > event_y_max:
                 event_y = event_y_min
             else:
                 event_y += event_y_inc
