@@ -156,6 +156,8 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('GridLines/width', '0.7pt')
         add_graph('middlegraph', 0.0, 20.0)
         add_graph('bottomgraph', 0.0, -1)
+        i.To('/page1/grid1/bottomgraph/x')
+        i.Set('label', u'Time [\\emph{s}]')
         
 
 
