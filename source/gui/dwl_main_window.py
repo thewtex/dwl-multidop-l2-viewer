@@ -24,11 +24,16 @@ class DWLMainWindow(QtGui.QMainWindow):
         self.ui.setupUi(self)
 
 # set up status bar
+        statusbar = self.statusbar = QtGui.QStatusBar(self)
+        self.setStatusBar(statusbar)
         self.statusBar().showMessage('Ready')
-        self.current_subject_label = QtGui.QLabel(self.statusBar())
+        self.current_subject_label = QtGui.QLabel(statusbar)
         self.statusBar().addPermanentWidget(self.current_subject_label)
-        self.loading_label = QtGui.QLabel(self.statusBar())
-        self.loading_progress_bar = QtGui.QProgressBar(self.statusBar())
+        self.loading_label = QtGui.QLabel(statusbar)
+        self.loading_progress_bar = QtGui.QProgressBar(statusbar)
+        self.axis_values_label = QtGui.QLabel(statusbar)
+        statusbar.addWidget(self.axis_values_label)
+        self.axis_values_label.show()
 
 # set up menu
         menubar = self.menuBar()
@@ -163,7 +168,7 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('width', [5.0/20.0])
         i.Set('height', [1.0])
         i.Set('Border/color', 'darkblue')
-        i.Set('Border/width', '2.0pt')
+        i.Set('Border/width', '1.0pt')
         i.Set('Fill/transparency', 80)
         i.Set('Fill/hide', False)
         i.Set('Fill/color', 'blue')
@@ -178,10 +183,16 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('width', [20.0/self.max_time])
         i.Set('height', [1.0])
         i.Set('Border/color', 'darkblue')
-        i.Set('Border/width', '2.0pt')
+        i.Set('Border/width', '1.0pt')
         i.Set('Fill/transparency', 80)
         i.Set('Fill/hide', False)
         i.Set('Fill/color', 'blue')
+
+# clicking on plot adjusts the zoom in the plot above
+        #self.connect(self.plot, QtCore.SIGNAL('clicked()'), self.onClickedPlot)
+        #print self.plot.getClick()
+        self.connect(self.plot, QtCore.SIGNAL("sigAxisValuesFromMouse"),
+                self.slotUpdateAxisValues)
 
 
 
@@ -333,4 +344,23 @@ class DWLMainWindow(QtGui.QMainWindow):
                 ("DWL MultiDop L2 Files (*.TX? *.TW? *.tx? *.tw?)"))
         fileprefix = str(fileprefix)
         self.load_file(fileprefix)
+
+##
+# @brief clicking on plot adjusts the zoom in the plot above
+    def onClickedPlot(self):
+        points = self.plot.getClick()
+        print points
+
+    def slotUpdateAxisValues(self, values):
+        """Update the position where the mouse is relative to the axes."""
+
+        if values:
+            # construct comma separated text representing axis values
+            valitems = []
+            for name, val in values.iteritems():
+                valitems.append('%s=%#.4g' % (name, val))
+            valitems.sort()
+            self.axis_values_label.setText(', '.join(valitems))
+        else:
+            self.axis_values_label.setText('No position')
 
