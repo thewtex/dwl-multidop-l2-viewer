@@ -155,10 +155,35 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('GridLines/hide', False)
         i.Set('GridLines/width', '0.7pt')
         add_graph('middlegraph', 0.0, 20.0)
+        i.To('/page1/grid1/middlegraph')
+        i.Add('rect', name='window', autoadd=False)
+        i.To('window')
+        i.Set('xPos', [2.5/20.0])
+        i.Set('yPos', [0.5])
+        i.Set('width', [5.0/20.0])
+        i.Set('height', [1.0])
+        i.Set('Border/color', 'darkblue')
+        i.Set('Border/width', '2.0pt')
+        i.Set('Fill/transparency', 80)
+        i.Set('Fill/hide', False)
+        i.Set('Fill/color', 'blue')
         add_graph('bottomgraph', 0.0, -1)
         i.To('/page1/grid1/bottomgraph/x')
         i.Set('label', u'Time [\\emph{s}]')
-        
+        i.To('..')
+        i.Add('rect', name='window', autoadd=False)
+        i.To('window')
+        i.Set('xPos', [10.0/self.max_time])
+        i.Set('yPos', [0.5])
+        i.Set('width', [20.0/self.max_time])
+        i.Set('height', [1.0])
+        i.Set('Border/color', 'darkblue')
+        i.Set('Border/width', '2.0pt')
+        i.Set('Fill/transparency', 80)
+        i.Set('Fill/hide', False)
+        i.Set('Fill/color', 'blue')
+
+
 
 
 
@@ -229,6 +254,7 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.SetData('chan2_vel', self.tw.chan2)
         sample_freq = float(self.tx.metadata['sample_freq'])
         time = numpy.arange(len(self.tw.chan1)) / sample_freq
+        self.max_time = len(self.tw.chan1) / sample_freq
         i.SetData('time', time)
 
         chandel = max([self.tw.chan1.max(), self.tw.chan2.max()]) - min([self.tw.chan1.min(), self.tw.chan2.min()])
