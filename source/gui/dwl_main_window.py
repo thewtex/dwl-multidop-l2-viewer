@@ -363,4 +363,19 @@ class DWLMainWindow(QtGui.QMainWindow):
 
     def slotAdjustGraphXLoc(self, values):
         i = self.interface
-        print values
+        graph_to_adjust = values[1]
+        target_time = values[0]['x']
+        if graph_to_adjust == 'top_graph':
+            i.To('/page1/grid1/top_graph/x')
+            i.Set('min', float(target_time - 2.5))
+            i.Set('max', float(target_time + 2.5))
+            i.To('../../middle_graph/x')
+            cur_min = i.Get('min')
+            i.To('../window')
+            i.Set('xPos', (target_time-cur_min)/20.0)
+        elif graph_to_adjust == 'middle_graph':
+            i.To('/page1/grid1/middle_graph/x')
+            i.Set('min', float(target_time - 10.0))
+            i.Set('max', float(target_time + 10.0))
+            i.To('../../bottom_graph/window')
+            i.Set('xPos', target_time/self.max_time)
