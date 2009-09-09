@@ -5,11 +5,7 @@ import os
 import sys
 
 from PyQt4 import QtGui, QtCore
-
-# stylesheet must be imported befor Application!
-import veusz.setting.stylesheet
-from veusz.application import Application
-app = Application(sys.argv)
+app = QtGui.QApplication(sys.argv)
 
 from gui.dwl_main_window import DWLMainWindow
 
