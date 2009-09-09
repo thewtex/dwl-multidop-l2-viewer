@@ -14,6 +14,7 @@ from dwl_multidop_exceptions import *
 from fileparsing.dwl_multidop_tx import TX
 from fileparsing.dwl_multidop_tw import TW
 from gui.ui_dwl_main_window import Ui_DWLMainWindow
+from gui.plotwindow import DWLPlotWindow
 
 class DWLMainWindow(QtGui.QMainWindow):
 
@@ -55,7 +56,7 @@ class DWLMainWindow(QtGui.QMainWindow):
 
 # set up graph
         self.document = document.Document()
-        self.plot = veusz.windows.plotwindow.PlotWindow(self.document, self)
+        self.plot = DWLPlotWindow(self.document, self)
         self.toolbar = self.plot.createToolbar(self, None)
         self.toolbar.show()
         self.setCentralWidget(self.plot)
@@ -150,8 +151,8 @@ class DWLMainWindow(QtGui.QMainWindow):
                     i.Set('Label/posnVert', u'top')
                     i.To('..')
 
-        add_graph('topgraph', 0.0, 5.0)
-        i.To('/page1/grid1/topgraph/x')
+        add_graph('top_graph', 0.0, 5.0)
+        i.To('/page1/grid1/top_graph/x')
         i.Set('GridLines/style', u'dotted-fine')
         i.Set('GridLines/hide', False)
         i.Set('GridLines/width', '0.75pt')
@@ -159,8 +160,8 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('GridLines/style', u'dotted-fine')
         i.Set('GridLines/hide', False)
         i.Set('GridLines/width', '0.7pt')
-        add_graph('middlegraph', 0.0, 20.0)
-        i.To('/page1/grid1/middlegraph')
+        add_graph('middle_graph', 0.0, 20.0)
+        i.To('/page1/grid1/middle_graph')
         i.Add('rect', name='window', autoadd=False)
         i.To('window')
         i.Set('xPos', [2.5/20.0])
@@ -172,8 +173,8 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('Fill/transparency', 80)
         i.Set('Fill/hide', False)
         i.Set('Fill/color', 'blue')
-        add_graph('bottomgraph', 0.0, -1)
-        i.To('/page1/grid1/bottomgraph/x')
+        add_graph('bottom_graph', 0.0, -1)
+        i.To('/page1/grid1/bottom_graph/x')
         i.Set('label', u'Time [\\emph{s}]')
         i.To('..')
         i.Add('rect', name='window', autoadd=False)
@@ -188,12 +189,13 @@ class DWLMainWindow(QtGui.QMainWindow):
         i.Set('Fill/hide', False)
         i.Set('Fill/color', 'blue')
 
-# clicking on plot adjusts the zoom in the plot above
-        #self.connect(self.plot, QtCore.SIGNAL('clicked()'), self.onClickedPlot)
-        #print self.plot.getClick()
+# print current x,y mouse position in lower left hand corner
         self.connect(self.plot, QtCore.SIGNAL("sigAxisValuesFromMouse"),
                 self.slotUpdateAxisValues)
 
+# adjust the x location in graphs above the one clicked
+        self.connect(self.plot, QtCore.SIGNAL('sigAdjustGraphXLoc'),
+                self.slotAdjustGraphXLoc)
 
 
 
@@ -345,11 +347,6 @@ class DWLMainWindow(QtGui.QMainWindow):
         fileprefix = str(fileprefix)
         self.load_file(fileprefix)
 
-##
-# @brief clicking on plot adjusts the zoom in the plot above
-    def onClickedPlot(self):
-        points = self.plot.getClick()
-        print points
 
     def slotUpdateAxisValues(self, values):
         """Update the position where the mouse is relative to the axes."""
@@ -364,3 +361,6 @@ class DWLMainWindow(QtGui.QMainWindow):
         else:
             self.axis_values_label.setText('No position')
 
+    def slotAdjustGraphXLoc(self, values):
+        i = self.interface
+        print values
