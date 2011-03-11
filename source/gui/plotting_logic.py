@@ -5,6 +5,8 @@ import veusz.setting
 
 from fileparsing.dwl_multidop_load_file import DWLMultidopLoadFile
 
+import numpy as np
+
 ## 
 # @brief implement logic of how plots look and behave
 class PlottingLogic(QtCore.QObject):
@@ -128,6 +130,15 @@ class PlottingLogic(QtCore.QObject):
         i.Set('GridLines/style', u'dotted-fine')
         i.Set('GridLines/hide', False)
         i.Set('GridLines/width', '0.7pt')
+        i.To('../chan1')
+        i.Set('key', u'Channel 1 TAP =')
+        i.To('../chan2')
+        i.Set('key', u'Channel 2 TAP =')
+        i.To('..')
+        i.Add('key', name='tap')
+        i.To('tap')
+        i.Set('horzPosn', u'right')
+        i.Set('vertPosn', u'top')
 
     def _set_up_middle_graph(self):
         i = self.interface
@@ -169,8 +180,23 @@ class PlottingLogic(QtCore.QObject):
         target_time = values[0]['x']
         if graph_to_adjust == 'top_graph':
             i.To('/page1/grid1/top_graph/x')
-            i.Set('min', float(target_time - 2.5))
-            i.Set('max', float(target_time + 2.5))
+            min_time = float(target_time - 2.5)
+            max_time = float(target_time + 2.5)
+            i.Set('min', min_time)
+            i.Set('max', max_time)
+            time = i.GetData('time')[0]
+            chan1 = i.GetData('chan1_vel')[0]
+            chan2 = i.GetData('chan2_vel')[0]
+            print( min_time )
+            print( max_time )
+            print( time )
+            target_time_idxs = np.logical_and(time > min_time, time < max_time)
+            tap1 = np.sum(chan1[target_time_idxs]) / np.sum(target_time_idxs)
+            tap2 = np.sum(chan2[target_time_idxs]) / np.sum(target_time_idxs)
+            i.To('../chan1')
+            i.Set('key', u'Channel 1 TAP = ' + '{0:.1f}'.format(tap1))
+            i.To('../chan2')
+            i.Set('key', u'Channel 2 TAP = ' + '{0:.1f}'.format(tap2))
             i.To('../../middle_graph/x')
             cur_min = i.Get('min')
             i.To('../window')
